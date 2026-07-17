@@ -1,0 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: light; }
+body { @apply min-h-screen bg-slate-50 text-ink antialiased; }
+button, a { -webkit-tap-highlight-color: transparent; }
+.card { @apply rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8; }
+.primary { @apply inline-flex min-h-14 items-center justify-center rounded-2xl bg-brand px-6 py-3 text-lg font-bold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50; }
+.secondary { @apply inline-flex min-h-14 items-center justify-center rounded-2xl border-2 border-brand bg-white px-6 py-3 text-lg font-bold text-brand transition hover:bg-indigo-50; }
