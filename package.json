@@ -13,12 +13,10 @@
     "qrcode"
   ],
   "scripts": {
-    "dev": "concurrently --kill-others --names qrcode,hub,dashboard,user,scanner --prefix-colors cyan,blue,magenta,green,yellow \"npm run dev:qrcode\" \"npm run dev:hub\" \"npm run dev:dashboard\" \"npm run dev:user\" \"npm run dev:scanner\"",
+    "dev": "concurrently --kill-others --names qrcode,hub,dashboard --prefix-colors cyan,blue,magenta \"npm run dev:qrcode\" \"npm run dev:hub\" \"npm run dev:dashboard\"",
     "dev:qrcode": "npm run dev --workspace=qrcode -- --port 3000",
     "dev:hub": "npm run dev --workspace=hub -- --port 5173",
     "dev:dashboard": "npm run dev --workspace=e-stamp -- --port 5174",
-    "dev:user": "npm run dev --workspace=user -- --port 5175",
-    "dev:scanner": "npm run dev --workspace=scanner -- --port 5176",
     "build": "npm run build --workspaces"
   },
   "dependencies": {

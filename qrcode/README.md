@@ -12,13 +12,11 @@ cp qrcode/.env.example qrcode/.env.local
 npm run dev
 ```
 
-คำสั่ง `npm run dev` ที่ root จะเปิดทุกแอปพร้อมกัน:
+คำสั่ง `npm run dev` ที่ root จะเปิดแอปที่ใช้งานจริงพร้อมกัน:
 
 - QR Code: `http://localhost:3000`
 - Hub: `http://localhost:5173`
 - Dashboard: `http://localhost:5174`
-- User placeholder: `http://localhost:5175`
-- Scanner placeholder: `http://localhost:5176`
 
 เปิด `http://localhost:3000` บนอุปกรณ์เดียวกัน สำหรับการทดสอบกล้องบนอุปกรณ์อื่นต้องให้บริการผ่าน HTTPS เพราะ Safari/Chrome ไม่อนุญาตกล้องบน HTTP ที่ไม่ใช่ localhost
 

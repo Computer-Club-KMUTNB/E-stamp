@@ -10,11 +10,12 @@ import type { Club, Zone } from "@/lib/types";
 const rewardZones: Zone[] = ["front", "back"];
 
 export default function DevPage() {
-  const [origin] = useState(() => typeof window === "undefined" ? "" : window.location.origin);
+  const [origin, setOrigin] = useState("");
   const [clubs, setClubs] = useState<Club[]>([]);
   const [error, setError] = useState("");
 
   useEffect(() => {
+    setOrigin(window.location.origin);
     getAllClubs().then(setClubs).catch((caught) => {
       setError(caught instanceof Error ? caught.message : "โหลดรายการบูธไม่สำเร็จ");
     });
