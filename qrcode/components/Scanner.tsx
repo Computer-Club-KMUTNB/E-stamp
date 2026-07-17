@@ -99,12 +99,12 @@ export function Scanner({ onScan, resetKey }: { onScan: (text: string) => Promis
   useEffect(() => () => { void stop(); }, [stop]);
 
   return <div className="space-y-4">
-    <div className="relative min-h-72 overflow-hidden rounded-3xl border-4 border-dashed border-indigo-200 bg-slate-950 sm:min-h-96">
+    <div className="relative min-h-72 overflow-hidden rounded-3xl border border-slate-700 bg-slate-950 shadow-inner sm:min-h-96">
       <div id="qr-reader" className="min-h-72 w-full sm:min-h-96" />
-      {state !== "scanning" && state !== "starting" && <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-white"><span className="text-6xl">▣</span><p className="mt-3 text-lg font-bold">จัด QR Code ให้อยู่กลางกรอบ</p></div>}
+      {state !== "scanning" && state !== "starting" && <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center text-white"><span className="grid h-20 w-20 place-items-center rounded-3xl border border-white/20 bg-white/10 text-5xl">⌗</span><p className="mt-5 text-xl font-bold">พร้อมสแกน QR</p><p className="mt-1 text-sm text-slate-400">กดปุ่มด้านล่าง แล้วจัด QR ให้อยู่กลางกรอบ</p></div>}
     </div>
     {error && <p role="alert" className="rounded-2xl bg-red-50 p-4 font-bold text-red-700">❌ {error}</p>}
     {state !== "scanning" && <button className="primary w-full" disabled={state === "starting"} onClick={start}>{state === "starting" ? "กำลังเปิดกล้อง…" : state === "error" ? "ลองเปิดกล้องอีกครั้ง" : "เริ่มสแกน"}</button>}
-    {state === "scanning" && <p className="rounded-2xl bg-blue-50 p-4 text-center font-bold text-blue-800">📷 กำลังสแกน…</p>}
+    {state === "scanning" && <p className="rounded-2xl border border-green-200 bg-green-50 p-4 text-center font-bold text-green-800"><span className="mr-2 inline-block h-2 w-2 animate-pulse rounded-full bg-green-600"/>กล้องพร้อม — กำลังค้นหา QR</p>}
   </div>;
 }

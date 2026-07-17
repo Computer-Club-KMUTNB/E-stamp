@@ -2,27 +2,27 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { QrImage } from "@/components/QrImage";
 import { getAllClubs } from "@/lib/dataClient";
 import { locationNames } from "@/lib/mockData";
 import type { Club, Zone } from "@/lib/types";
 
-const rewardZones: Zone[] = ["front", "back"];
+const zones: Zone[] = ["front", "back"];
 
 export default function DevPage() {
-  const [origin, setOrigin] = useState("");
   const [clubs, setClubs] = useState<Club[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    setOrigin(window.location.origin);
     getAllClubs().then(setClubs).catch((caught) => {
       setError(caught instanceof Error ? caught.message : "โหลดรายการบูธไม่สำเร็จ");
-    });
+    }).finally(() => setLoading(false));
   }, []);
 
-  return <div className="py-4 sm:py-8"><header className="card"><p className="text-sm font-black uppercase tracking-widest text-brand">Development tools</p><h1 className="mt-2 text-3xl font-black sm:text-4xl">หน้าทดสอบระบบ Supabase</h1><p className="mt-3 text-slate-600">รายการบูธด้านล่างโหลดจากฐานข้อมูลจริง การสแกนจะบันทึกลง user_stamps และ activity_log</p><div className="mt-5"><Link className="primary" href="/register">ไปหน้าลงทะเบียน</Link></div>{error && <p className="mt-4 rounded-xl bg-red-50 p-3 font-bold text-red-700">{error}</p>}</header>
-    <h2 className="mb-4 mt-10 text-2xl font-black">จุดบูธ ({clubs.length})</h2><div className="grid gap-5 md:grid-cols-2">{clubs.map((club) => { const url = `${origin}/club/${encodeURIComponent(club.id)}`; return <article className="card" key={club.id}><p className="text-sm font-bold text-brand">{locationNames[club.location]}</p><h3 className="mt-1 text-xl font-black">{club.name}</h3><p className="my-3 break-all text-xs text-slate-500">{url}</p><QrImage value={url} label="QR สำหรับเปิดหน้าจุดบริการ" downloadName={`${club.id}.png`} /><Link className="primary mt-4 w-full" href={`/club/${encodeURIComponent(club.id)}`}>เปิดหน้าสแกน</Link></article>; })}</div>
-    <h2 className="mb-4 mt-10 text-2xl font-black">จุดรับรางวัล</h2><div className="grid gap-5 md:grid-cols-2">{rewardZones.map((zone) => { const token = `reward-${zone}`; const url = `${origin}/reward/${token}`; return <article className="card" key={zone}><p className="text-sm font-bold text-brand">จุดรับรางวัล</p><h3 className="mt-1 text-xl font-black">{locationNames[zone]}</h3><p className="my-3 break-all text-xs text-slate-500">{url}</p><QrImage value={url} label="QR สำหรับเปิดหน้าจุดรับรางวัล" downloadName={`${token}.png`} /><Link className="primary mt-4 w-full" href={`/reward/${token}`}>เปิดหน้าสแกน</Link></article>; })}</div>
+  return <div className="py-8 sm:py-12">
+    <header className="grid items-end gap-6 border-b pb-8 md:grid-cols-[1fr_auto]" style={{borderColor:"var(--line)"}}><div><p className="eyebrow">STAFF CONSOLE</p><h1 className="mt-2 text-4xl font-black tracking-tight sm:text-5xl">เลือกจุดปฏิบัติงาน</h1><p className="mt-3 max-w-2xl leading-7 text-slate-600">เลือกบูธเพื่อเปิดกล้องสแกน หรือเปิดจุดตรวจรับรางวัล ข้อมูลทุกครั้งจะส่งไปยัง Dashboard อัตโนมัติ</p></div><Link className="secondary" href="/register">+ ลงทะเบียนผู้เข้าร่วม</Link></header>
+    {error && <div role="alert" className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-4 font-bold text-red-800">{error}</div>}
+    {loading ? <div className="grid gap-4 py-10 sm:grid-cols-2">{[1,2,3,4].map(n=><div key={n} className="h-28 animate-pulse rounded-3xl bg-white/70"/>)}</div> : clubs.length === 0 ? <section className="card mt-8 text-center"><div className="text-5xl">⌁</div><h2 className="mt-4 text-2xl font-black">ยังไม่มีข้อมูลบูธ</h2><p className="mt-2 text-slate-600">เพิ่มข้อมูลในตาราง booths ของ Supabase แล้วรีเฟรชหน้านี้</p></section> : zones.map(zone => { const zoneClubs=clubs.filter(club=>club.location===zone); return <section className="mt-10" key={zone}><div className="mb-4 flex items-center justify-between"><div><p className="eyebrow">{zone.toUpperCase()} ZONE</p><h2 className="mt-1 text-2xl font-black">{locationNames[zone]}</h2></div><span className="rounded-full border bg-white px-3 py-1 text-sm font-bold text-slate-600" style={{borderColor:"var(--line)"}}>{zoneClubs.length} บูธ</span></div><div className="grid gap-3 md:grid-cols-2">{zoneClubs.map((club,index)=><Link href={`/club/${encodeURIComponent(club.id)}`} className="group flex items-center gap-4 rounded-2xl border bg-white/80 p-4 no-underline transition hover:-translate-y-0.5 hover:shadow-lg" style={{borderColor:"var(--line)"}} key={club.id}><span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-red-50 font-black text-red-800">{String(index+1).padStart(2,"0")}</span><span className="min-w-0 flex-1"><b className="block truncate text-lg text-slate-950">{club.name}</b><small className="text-slate-500">รหัสบูธ {club.id}</small></span><span className="text-xl text-slate-400 transition group-hover:translate-x-1 group-hover:text-red-800">→</span></Link>)}</div></section>; })}
+    <section className="mt-12 rounded-3xl bg-slate-950 p-6 text-white sm:p-8"><p className="eyebrow !text-red-300">REWARD DESK</p><div className="mt-2 flex flex-col justify-between gap-5 md:flex-row md:items-center"><div><h2 className="text-2xl font-black">จุดตรวจรับรางวัล</h2><p className="mt-1 text-slate-400">ตรวจแสตมป์ครบทุกบูธและบันทึกการรับรางวัล</p></div><div className="flex flex-col gap-2 sm:flex-row">{zones.map(zone=><Link className="inline-flex min-h-12 items-center justify-center rounded-xl bg-white px-5 font-bold text-slate-950 no-underline hover:bg-red-100" href={`/reward/reward-${zone}`} key={zone}>เปิด{locationNames[zone]} →</Link>)}</div></div></section>
   </div>;
 }
