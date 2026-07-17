@@ -20,6 +20,7 @@ import {
   BarChart,
   Bar
 } from 'recharts';
+import { supabase } from '../../lib/supabase';
 import './Dashboard.css';
 
 // Mock Data
@@ -50,8 +51,10 @@ const recentActivityData = [
 ];
 
 const Dashboard: React.FC = () => {
-  const [currentAttendees, setCurrentAttendees] = useState(1890);
+  const [currentAttendees, setCurrentAttendees] = useState(0);
+  const [rewardsClaimed, setRewardsClaimed] = useState(0);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
   // Apply dark mode class to root
   useEffect(() => {
@@ -62,12 +65,51 @@ const Dashboard: React.FC = () => {
     }
   }, [isDarkMode]);
   
-  // Simulate real-time updates
+  // Fetch real data from Supabase
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentAttendees(prev => prev + Math.floor(Math.random() * 3));
-    }, 5000);
-    return () => clearInterval(interval);
+    const fetchDashboardData = async () => {
+      setIsLoading(true);
+      try {
+        // Fetch Total Attendees
+        const { count: attendeeCount } = await supabase
+          .from('user_stamps')
+          .select('*', { count: 'exact', head: true });
+        
+        if (attendeeCount !== null) {
+          setCurrentAttendees(attendeeCount);
+        }
+
+        // Fetch Total Rewards Claimed
+        const { count: rewardCount } = await supabase
+          .from('user_stamps')
+          .select('*', { count: 'exact', head: true })
+          .eq('is_collect_reward', true);
+        
+        if (rewardCount !== null) {
+          setRewardsClaimed(rewardCount);
+        }
+
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+
+    // Set up real-time subscription for new check-ins
+    const subscription = supabase
+      .channel('public:user_stamps')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'user_stamps' }, payload => {
+        console.log('Change received!', payload);
+        fetchDashboardData(); // Refresh data when database changes
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
   }, []);
 
   return (
@@ -106,10 +148,10 @@ const Dashboard: React.FC = () => {
             <h3 className="metric-title">Total Attendees</h3>
             <div className="metric-icon"><Users size={20} /></div>
           </div>
-          <div className="metric-value">{currentAttendees.toLocaleString()}</div>
+          <div className="metric-value">{isLoading ? '...' : currentAttendees.toLocaleString()}</div>
           <div className="metric-trend trend-up">
             <TrendingUp size={16} />
-            <span>+12% from last hour</span>
+            <span>Live Data Sync</span>
           </div>
         </div>
 
@@ -127,13 +169,13 @@ const Dashboard: React.FC = () => {
 
         <div className="metric-card glass glass-card animate-fade-in delay-300">
           <div className="metric-header">
-            <h3 className="metric-title">Rewards Remaining</h3>
+            <h3 className="metric-title">Rewards Claimed</h3>
             <div className="metric-icon"><Gift size={20} /></div>
           </div>
-          <div className="metric-value">428</div>
-          <div className="metric-trend trend-down">
-            <TrendingUp size={16} style={{ transform: 'scaleY(-1)' }} />
-            <span>-45 in last hour</span>
+          <div className="metric-value">{isLoading ? '...' : rewardsClaimed.toLocaleString()}</div>
+          <div className="metric-trend trend-up">
+            <TrendingUp size={16} />
+            <span>Out of 1000 Total</span>
           </div>
         </div>
       </div>
