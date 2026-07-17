@@ -171,8 +171,9 @@ const Dashboard: React.FC = () => {
     <div className="dashboard-container">
       <header className="dashboard-header animate-fade-in">
         <div>
-          <h1 className="dashboard-title text-brand-gradient">E-stamp Admin Dashboard</h1>
-          <p className="dashboard-subtitle">Real-time overview of the KMUTNB Open World event</p>
+          <p className="dashboard-eyebrow">KMUTNB OPEN WORLD</p>
+          <h1 className="dashboard-title">Event Dashboard</h1>
+          <p className="dashboard-subtitle">ภาพรวมการเข้าร่วมกิจกรรมแบบเรียลไทม์</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <button 
@@ -200,37 +201,37 @@ const Dashboard: React.FC = () => {
       <div className="metrics-grid">
         <div className="metric-card glass glass-card animate-fade-in delay-100">
           <div className="metric-header">
-            <h3 className="metric-title">Total Attendees</h3>
+            <h3 className="metric-title">ผู้เข้าร่วมทั้งหมด</h3>
             <div className="metric-icon"><Users size={20} /></div>
           </div>
           <div className="metric-value">{isLoading ? '...' : currentAttendees.toLocaleString()}</div>
           <div className="metric-trend trend-up">
             <TrendingUp size={16} />
-            <span>Live Data Sync</span>
+            <span>อัปเดตแบบเรียลไทม์</span>
           </div>
         </div>
 
         <div className="metric-card glass glass-card animate-fade-in delay-200">
           <div className="metric-header">
-            <h3 className="metric-title">Most Popular Booth</h3>
+            <h3 className="metric-title">บูธยอดนิยม</h3>
             <div className="metric-icon"><MapPin size={20} /></div>
           </div>
-          <div className="metric-value">Engineering</div>
+          <div className="metric-value metric-value-text">{isLoading ? '...' : popularBoothsData[0]?.visits ? popularBoothsData[0].name : 'ยังไม่มีข้อมูล'}</div>
           <div className="metric-trend trend-up">
             <TrendingUp size={16} />
-            <span>850 total visits</span>
+            <span>{popularBoothsData[0]?.visits ? `${popularBoothsData[0].visits.toLocaleString()} ครั้ง` : 'รอการเช็กอิน'}</span>
           </div>
         </div>
 
         <div className="metric-card glass glass-card animate-fade-in delay-300">
           <div className="metric-header">
-            <h3 className="metric-title">Rewards Claimed</h3>
+            <h3 className="metric-title">รับรางวัลแล้ว</h3>
             <div className="metric-icon"><Gift size={20} /></div>
           </div>
           <div className="metric-value">{isLoading ? '...' : rewardsClaimed.toLocaleString()}</div>
           <div className="metric-trend trend-up">
             <TrendingUp size={16} />
-            <span>Out of 1000 Total</span>
+            <span>จากผู้เข้าร่วมทั้งหมด</span>
           </div>
         </div>
       </div>
@@ -239,7 +240,7 @@ const Dashboard: React.FC = () => {
         <div className="chart-section glass glass-card animate-fade-in delay-200">
           <h3 className="section-title">
             <Activity size={20} className="text-brand-gradient" />
-            Check-ins Over Time
+            การเช็กอินตามเวลา
           </h3>
           <div className="chart-container">
             <ResponsiveContainer width="100%" height="100%">
@@ -266,7 +267,7 @@ const Dashboard: React.FC = () => {
         <div className="feed-section glass glass-card animate-fade-in delay-300">
           <h3 className="section-title">
             <CheckCircle2 size={20} className="text-brand-gradient" />
-            Live Activity Feed
+            กิจกรรมล่าสุด
           </h3>
           <div className="feed-list">
             {recentActivityData.map((item) => (
@@ -285,7 +286,7 @@ const Dashboard: React.FC = () => {
           </div>
           
           <h3 className="section-title" style={{ marginTop: '2rem' }}>
-            Top Booths
+            อันดับบูธ
           </h3>
           <div className="chart-container" style={{ minHeight: '200px' }}>
             <ResponsiveContainer width="100%" height="100%">
