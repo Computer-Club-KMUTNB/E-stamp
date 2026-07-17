@@ -1,0 +1,10 @@
+{
+  "name": "e-stamp-root",
+  "private": true,
+  "workspaces": [
+    "dashboard-app"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces"
+  }
+}

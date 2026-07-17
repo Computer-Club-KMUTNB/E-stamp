@@ -1,0 +1,23 @@
+{
+  "rewrites": [
+    {
+      "source": "/dashboard/(.*)",
+      "destination": "/dashboard/index.html"
+    },
+    {
+      "source": "/scanner/(.*)",
+      "destination": "/scanner/index.html"
+    },
+    {
+      "source": "/user/(.*)",
+      "destination": "/user/index.html"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/dashboard",
+      "permanent": false
+    }
+  ]
+}
