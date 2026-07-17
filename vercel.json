@@ -11,13 +11,10 @@
     {
       "source": "/user/(.*)",
       "destination": "/user/index.html"
-    }
-  ],
-  "redirects": [
+    },
     {
-      "source": "/",
-      "destination": "/dashboard",
-      "permanent": false
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
