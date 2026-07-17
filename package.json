@@ -9,5 +9,8 @@
   ],
   "scripts": {
     "build": "npm run build --workspaces"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.110.7"
   }
 }
