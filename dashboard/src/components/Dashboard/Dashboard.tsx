@@ -23,38 +23,35 @@ import {
 import { supabase } from '../../lib/supabase';
 import './Dashboard.css';
 
-// Mock Data
-const checkInTimelineData = [
-  { time: '08:00', attendees: 120 },
-  { time: '09:00', attendees: 450 },
-  { time: '10:00', attendees: 890 },
-  { time: '11:00', attendees: 1250 },
-  { time: '12:00', attendees: 1420 },
-  { time: '13:00', attendees: 1680 },
-  { time: '14:00', attendees: 1890 },
-];
+// Type Definitions
+interface ActivityItem {
+  id: string | number;
+  user: string;
+  action: string;
+  target: string;
+  time: string;
+}
 
-const popularBoothsData = [
-  { name: 'Engineering', visits: 850 },
-  { name: 'Computer Sci', visits: 720 },
-  { name: 'Business', visits: 600 },
-  { name: 'Arts', visits: 450 },
-  { name: 'Science', visits: 390 },
-];
+interface BoothItem {
+  name: string;
+  visits: number;
+}
 
-const recentActivityData = [
-  { id: 1, user: 'Student 64010...', action: 'checked in at', target: 'Engineering Booth', time: 'Just now' },
-  { id: 2, user: 'Student 64021...', action: 'redeemed', target: 'Grand Prize', time: '2 mins ago' },
-  { id: 3, user: 'Student 63015...', action: 'completed', target: 'All 10 Booths', time: '5 mins ago' },
-  { id: 4, user: 'Student 65002...', action: 'checked in at', target: 'Computer Sci Booth', time: '12 mins ago' },
-  { id: 5, user: 'Student 64099...', action: 'checked in at', target: 'Business Booth', time: '15 mins ago' },
-];
+interface TimelineItem {
+  time: string;
+  attendees: number;
+}
 
 const Dashboard: React.FC = () => {
   const [currentAttendees, setCurrentAttendees] = useState(0);
   const [rewardsClaimed, setRewardsClaimed] = useState(0);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Advanced Chart State
+  const [checkInTimelineData, setCheckInTimelineData] = useState<TimelineItem[]>([{ time: 'Waiting...', attendees: 0 }]);
+  const [popularBoothsData, setPopularBoothsData] = useState<BoothItem[]>([{ name: 'No data', visits: 0 }]);
+  const [recentActivityData, setRecentActivityData] = useState<ActivityItem[]>([]);
   
   // Apply dark mode class to root
   useEffect(() => {
@@ -89,6 +86,65 @@ const Dashboard: React.FC = () => {
           setRewardsClaimed(rewardCount);
         }
 
+        // Fetch Activity Logs for Charts
+        const { data: logsData } = await supabase
+          .from('activity_log')
+          .select(`
+            id,
+            action_type,
+            created_at,
+            booth_id,
+            user_info ( name, student_id ),
+            booths ( name )
+          `)
+          .order('created_at', { ascending: false });
+
+        if (logsData && logsData.length > 0) {
+          // 1. Live Activity Feed (Top 5)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const formattedFeed = logsData.slice(0, 5).map((log: any) => ({
+            id: log.id,
+            user: log.user_info?.name || log.user_info?.student_id || 'Unknown Student',
+            action: log.action_type === 'redeem_reward' ? 'redeemed' : 'checked in at',
+            target: log.action_type === 'redeem_reward' ? 'Grand Prize' : (log.booths?.name || log.booth_id || 'Unknown Booth'),
+            time: new Date(log.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          }));
+          setRecentActivityData(formattedFeed);
+
+          // 2. Top Booths (Count frequencies)
+          const boothCounts: Record<string, { name: string, visits: number }> = {};
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          logsData.forEach((log: any) => {
+            if (log.action_type === 'check_in' && log.booths) {
+              const bName = log.booths.name;
+              if (!boothCounts[bName]) boothCounts[bName] = { name: bName, visits: 0 };
+              boothCounts[bName].visits += 1;
+            }
+          });
+          const sortedBooths = Object.values(boothCounts)
+            .sort((a, b) => b.visits - a.visits)
+            .slice(0, 5);
+          if (sortedBooths.length > 0) setPopularBoothsData(sortedBooths);
+
+          // 3. Check-ins Over Time (Group by hour)
+          const timeGroups: Record<string, number> = {};
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          logsData.forEach((log: any) => {
+            if (log.action_type === 'check_in') {
+              const date = new Date(log.created_at);
+              const hourStr = `${date.getHours().toString().padStart(2, '0')}:00`;
+              timeGroups[hourStr] = (timeGroups[hourStr] || 0) + 1;
+            }
+          });
+          
+          const sortedTimes = Object.keys(timeGroups).sort();
+          const formattedTimeline = sortedTimes.map(time => ({
+            time,
+            attendees: timeGroups[time]
+          }));
+          if (formattedTimeline.length > 0) setCheckInTimelineData(formattedTimeline);
+        }
+
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
       } finally {
@@ -100,10 +156,9 @@ const Dashboard: React.FC = () => {
 
     // Set up real-time subscription for new check-ins
     const subscription = supabase
-      .channel('public:user_stamps')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'user_stamps' }, payload => {
-        console.log('Change received!', payload);
-        fetchDashboardData(); // Refresh data when database changes
+      .channel('public:activity_log')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'activity_log' }, () => {
+        fetchDashboardData(); // Refresh data when a new log arrives
       })
       .subscribe();
 
