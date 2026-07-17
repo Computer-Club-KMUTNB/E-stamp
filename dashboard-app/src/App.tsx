@@ -15,7 +15,7 @@ const Navigation = () => {
           fontWeight: 600 
         }}
       >
-        Dashboard Home
+        E-stamp
       </Link>
       <a 
         href="/scanner" 
