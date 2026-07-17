@@ -1,13 +1,24 @@
 # E-Stamp QR Code
 
-ระบบ QR Code สำหรับสะสมแสตมป์งาน Open House สร้างด้วย Next.js 14, TypeScript และ Tailwind CSS ข้อมูลทดสอบเก็บใน `localStorage` โดยไม่มี backend
+ระบบ QR Code สำหรับสะสมแสตมป์งาน Open House สร้างด้วย Next.js 14, TypeScript, Tailwind CSS และ Supabase โดยใช้ฐานข้อมูลชุดเดียวกับ Dashboard
 
 ## เริ่มใช้งาน
 
 ```bash
+nvm install
+nvm use
 npm install
+cp qrcode/.env.example qrcode/.env.local
 npm run dev
 ```
+
+คำสั่ง `npm run dev` ที่ root จะเปิดทุกแอปพร้อมกัน:
+
+- QR Code: `http://localhost:3000`
+- Hub: `http://localhost:5173`
+- Dashboard: `http://localhost:5174`
+- User placeholder: `http://localhost:5175`
+- Scanner placeholder: `http://localhost:5176`
 
 เปิด `http://localhost:3000` บนอุปกรณ์เดียวกัน สำหรับการทดสอบกล้องบนอุปกรณ์อื่นต้องให้บริการผ่าน HTTPS เพราะ Safari/Chrome ไม่อนุญาตกล้องบน HTTP ที่ไม่ใช่ localhost
 
@@ -26,16 +37,15 @@ cloudflared tunnel --url http://localhost:3000
 
 ## ทดสอบครบทั้ง flow
 
-1. เปิด `/register` กรอกรหัสนักศึกษาเป็นตัวเลข 13 หลัก และบันทึก QR
-2. เปิด `/dev` เพื่อดู URL และ QR ของชมรมและจุดรับรางวัล
-3. เปิดหน้าสแกนของแต่ละชมรมบน iPad/โทรศัพท์ กด **เริ่มสแกน** และสแกน QR ผู้เข้าร่วม
-4. เมื่อครบทุกชมรมในสถานที่นั้น เปิดหน้าจุดรับรางวัลและสแกน QR เดิม
-5. ปุ่ม **ล้างข้อมูลทดสอบ** ใน `/dev` จะล้างนักศึกษา แสตมป์ และประวัติรับรางวัลของ browser ปัจจุบัน
+1. เปิด `/register` กรอกชื่อและรหัสนักศึกษา 13 หลัก แล้วบันทึก QR
+2. เปิด `/dev` เพื่อดูบูธจาก Supabase พร้อม URL และ QR สำหรับหน้าสแกน
+3. เปิดหน้าสแกนของแต่ละบูธบน iPad/โทรศัพท์ กด **เริ่มสแกน** และสแกน QR ผู้เข้าร่วม
+4. เมื่อครบทุกบูธทั้งโซนหน้าและโซนหลัง เปิดหน้าจุดรับรางวัลและสแกน QR เดิม
 
-> localStorage แยกกันตาม browser/device การทดสอบข้อมูลร่วมกันระหว่างหลายอุปกรณ์ต้องเปลี่ยน data client ไปใช้ backend ก่อน
+การสแกนสำเร็จจะอัปเดต `user_stamps` และเพิ่ม `activity_log` เพื่อให้ Dashboard อัปเดตผ่าน Realtime
 
-## เปลี่ยนไปใช้ Supabase
+## Supabase
 
-UI เรียกข้อมูลผ่าน [`lib/dataClient.ts`](lib/dataClient.ts) เท่านั้น ให้คงชื่อ ฟังก์ชัน arguments และ return types เดิม แล้วเปลี่ยน implementation ภายในเป็นการเรียก Supabase/API ได้แก่ `getStudentByToken`, `createStudent`, `getClubByToken`, `getClubsByLocation`, `recordStamp`, `getStampsForStudent`, `getRewardBoothByToken`, `getRewardClaim` และ `createRewardClaim`
+กำหนด `NEXT_PUBLIC_SUPABASE_URL` และ `NEXT_PUBLIC_SUPABASE_ANON_KEY` ใน `.env.local` ห้าม commit ไฟล์นี้
 
-ฐานข้อมูลจริงควรกำหนด unique constraints สำหรับ `(studentId, clubId)`, `(studentId, location)` และ `studentCode` เพื่อป้องกันรายการซ้ำแม้มี request พร้อมกัน
+QR เก็บเฉพาะค่า SHA-256 ของรหัสนักศึกษา (`hashed_user_id`) ไม่ได้เก็บรหัสนักศึกษาจริง

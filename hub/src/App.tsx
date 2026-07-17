@@ -2,6 +2,10 @@ import { LayoutDashboard, ScanLine, UserCircle } from 'lucide-react';
 import './index.css';
 
 function App() {
+  const dashboardUrl = import.meta.env.DEV ? 'http://localhost:5174' : '/dashboard';
+  const scannerUrl = import.meta.env.DEV ? 'http://localhost:3000/dev' : '/scanner';
+  const userUrl = import.meta.env.DEV ? 'http://localhost:3000/register' : '/user';
+
   return (
     <div className="hub-container">
       <header className="hub-header">
@@ -10,7 +14,7 @@ function App() {
       </header>
       
       <div className="cards-grid">
-        <a href="/dashboard" className="app-card">
+        <a href={dashboardUrl} className="app-card">
           <div className="card-icon-wrapper">
             <LayoutDashboard size={40} strokeWidth={1.5} />
           </div>
@@ -18,7 +22,7 @@ function App() {
           <p className="card-description">Manage events, booths, and view real-time statistics.</p>
         </a>
 
-        <a href="/scanner" className="app-card">
+        <a href={scannerUrl} className="app-card">
           <div className="card-icon-wrapper">
             <ScanLine size={40} strokeWidth={1.5} />
           </div>
@@ -26,7 +30,7 @@ function App() {
           <p className="card-description">For staff to scan student passports and award stamps.</p>
         </a>
 
-        <a href="/user" className="app-card">
+        <a href={userUrl} className="app-card">
           <div className="card-icon-wrapper">
             <UserCircle size={40} strokeWidth={1.5} />
           </div>

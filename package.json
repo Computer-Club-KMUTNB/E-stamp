@@ -1,6 +1,10 @@
 {
   "name": "e-stamp-root",
   "private": true,
+  "engines": {
+    "node": ">=20.19.0 <21",
+    "npm": ">=10"
+  },
   "workspaces": [
     "hub",
     "dashboard",
@@ -9,9 +13,18 @@
     "qrcode"
   ],
   "scripts": {
+    "dev": "concurrently --kill-others --names qrcode,hub,dashboard,user,scanner --prefix-colors cyan,blue,magenta,green,yellow \"npm run dev:qrcode\" \"npm run dev:hub\" \"npm run dev:dashboard\" \"npm run dev:user\" \"npm run dev:scanner\"",
+    "dev:qrcode": "npm run dev --workspace=qrcode -- --port 3000",
+    "dev:hub": "npm run dev --workspace=hub -- --port 5173",
+    "dev:dashboard": "npm run dev --workspace=e-stamp -- --port 5174",
+    "dev:user": "npm run dev --workspace=user -- --port 5175",
+    "dev:scanner": "npm run dev --workspace=scanner -- --port 5176",
     "build": "npm run build --workspaces"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.7"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.3"
   }
 }
