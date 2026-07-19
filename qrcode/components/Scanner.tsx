@@ -1,9 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 import type { CameraDevice, Html5QrcodeCameraScanConfig } from "html5-qrcode";
 
 type ScannerState = "idle" | "starting" | "scanning" | "error";
+
+export type ScannerHandle = { start: () => Promise<void> };
 
 function cameraErrorMessage(error: unknown) {
   if (!window.isSecureContext) {
@@ -26,7 +28,7 @@ function cameraErrorMessage(error: unknown) {
   return `เปิดกล้องไม่สำเร็จ (${detail || "ไม่ทราบสาเหตุ"})`;
 }
 
-export function Scanner({ onScan, resetKey }: { onScan: (text: string) => Promise<void>; resetKey: number }) {
+export const Scanner = forwardRef<ScannerHandle, { onScan: (text: string) => Promise<void>; resetKey: number }>(function Scanner({ onScan, resetKey }, ref) {
   const scannerRef = useRef<import("html5-qrcode").Html5Qrcode | null>(null);
   const locked = useRef(false);
   const [state, setState] = useState<ScannerState>("idle");
@@ -90,6 +92,8 @@ export function Scanner({ onScan, resetKey }: { onScan: (text: string) => Promis
     }
   }, [onScan, stop]);
 
+  useImperativeHandle(ref, () => ({ start }), [start]);
+
   useEffect(() => {
     locked.current = false;
     setState("idle");
@@ -99,7 +103,7 @@ export function Scanner({ onScan, resetKey }: { onScan: (text: string) => Promis
   useEffect(() => () => { void stop(); }, [stop]);
 
   return <div className="space-y-4">
-    <div className="relative min-h-72 overflow-hidden rounded-3xl border border-slate-700 bg-slate-950 shadow-inner sm:min-h-96">
+    <div className="scanner-viewport relative min-h-72 overflow-hidden rounded-2xl border border-slate-700 bg-slate-950 shadow-inner sm:min-h-96 sm:rounded-3xl">
       <div id="qr-reader" className="min-h-72 w-full sm:min-h-96" />
       {state !== "scanning" && state !== "starting" && <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center text-white"><span className="grid h-20 w-20 place-items-center rounded-3xl border border-white/20 bg-white/10 text-5xl">⌗</span><p className="mt-5 text-xl font-bold">พร้อมสแกน QR</p><p className="mt-1 text-sm text-slate-400">กดปุ่มด้านล่าง แล้วจัด QR ให้อยู่กลางกรอบ</p></div>}
     </div>
@@ -107,4 +111,4 @@ export function Scanner({ onScan, resetKey }: { onScan: (text: string) => Promis
     {state !== "scanning" && <button className="primary w-full" disabled={state === "starting"} onClick={start}>{state === "starting" ? "กำลังเปิดกล้อง…" : state === "error" ? "ลองเปิดกล้องอีกครั้ง" : "เริ่มสแกน"}</button>}
     {state === "scanning" && <p className="rounded-2xl border border-green-200 bg-green-50 p-4 text-center font-bold text-green-800"><span className="mr-2 inline-block h-2 w-2 animate-pulse rounded-full bg-green-600"/>กล้องพร้อม — กำลังค้นหา QR</p>}
   </div>;
-}
+});

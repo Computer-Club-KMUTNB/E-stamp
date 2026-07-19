@@ -1,6 +1,6 @@
 import type { Zone } from "./types";
 
 export const locationNames: Record<Zone, string> = {
-  front: "โซนหน้า",
-  back: "โซนหลัง",
+  front: "ชั้น 1 อาคารอเนกประสงค์",
+  back: "ลานสวนปาล์ม หน้าตึก 40",
 };

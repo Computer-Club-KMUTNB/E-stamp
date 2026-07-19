@@ -175,7 +175,7 @@ const Dashboard: React.FC = () => {
           <h1 className="dashboard-title">Event Dashboard</h1>
           <p className="dashboard-subtitle">ภาพรวมการเข้าร่วมกิจกรรมแบบเรียลไทม์</p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div className="dashboard-actions">
           <button 
             onClick={() => setIsDarkMode(!isDarkMode)}
             className="glass"
