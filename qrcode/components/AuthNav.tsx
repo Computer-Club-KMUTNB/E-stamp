@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
 export function AuthNav() {
+  const pathname = usePathname();
   const router = useRouter();
   const [signedIn, setSignedIn] = useState(false);
 
@@ -14,6 +15,6 @@ export function AuthNav() {
     return () => data.subscription.unsubscribe();
   }, []);
 
-  if (!signedIn) return null;
+  if (!signedIn || pathname === "/register") return null;
   return <button className="site-nav-link staff" onClick={async () => { await supabase.auth.signOut(); router.replace("/login"); router.refresh(); }}>ออกจากระบบ</button>;
 }

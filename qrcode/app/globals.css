@@ -14,6 +14,8 @@ button,a { @apply focus-visible:outline-none focus-visible:ring-4 focus-visible:
 .site-nav { @apply flex h-20 items-center justify-between border-b; border-color:var(--line); }
 .site-brand { @apply flex items-center gap-3 font-black tracking-wider no-underline; font-family:'Manrope',sans-serif; }
 .site-brand-mark { @apply grid h-9 w-9 place-items-center rounded-xl text-sm text-white; background:var(--brand); }
+.site-brand-copy { @apply flex flex-col leading-none; }
+.site-brand-copy small { @apply mt-1 text-[9px] font-bold tracking-[.16em]; color:var(--muted); }
 .site-nav-links { @apply flex items-center gap-1; }
 .site-nav-link { @apply rounded-xl px-3 py-2 text-sm font-bold text-slate-600 no-underline hover:bg-white hover:text-slate-950; }
 .card { @apply rounded-3xl border bg-white/90 p-5 sm:p-8; border-color:var(--line); box-shadow:0 16px 45px rgba(23,32,29,.07); }
@@ -32,14 +34,13 @@ button,a { @apply focus-visible:outline-none focus-visible:ring-4 focus-visible:
   .site-nav{height:68px}
   .site-brand{gap:.55rem;font-size:.9rem}
   .site-brand-mark{height:2rem;width:2rem;border-radius:.65rem}
-  .site-nav-link{padding:.55rem .65rem;font-size:.8rem}
-  .site-nav-link.staff{display:none}
+  .site-nav-link{min-height:44px;padding:.55rem .65rem;font-size:.8rem;white-space:nowrap}
   .site-shell{padding-left:max(14px,env(safe-area-inset-left));padding-right:max(14px,env(safe-area-inset-right))}
   .card{border-radius:22px;padding:18px}
   .primary,.secondary{min-height:52px;width:100%;padding-left:1rem;padding-right:1rem;font-size:1rem}
   .field{min-height:52px;font-size:16px}
   h1,h2,p{overflow-wrap:anywhere}
 }
-@media(max-width:380px){.site-nav-links{gap:0}.site-nav-link{padding-inline:.45rem}.card{padding:15px}}
+@media(max-width:380px){.site-brand-copy{display:none}.site-nav-links{gap:0}.site-nav-link{padding-inline:.55rem}.card{padding:15px}}
 @media(max-height:600px) and (orientation:landscape){#qr-reader{min-height:220px!important}.scanner-viewport{min-height:220px!important}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}

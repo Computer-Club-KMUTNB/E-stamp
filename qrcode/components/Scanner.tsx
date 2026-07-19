@@ -3,7 +3,7 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 import type { CameraDevice, Html5QrcodeCameraScanConfig } from "html5-qrcode";
 
-type ScannerState = "idle" | "starting" | "scanning" | "error";
+type ScannerState = "idle" | "starting" | "scanning" | "processing" | "error";
 
 export type ScannerHandle = { start: () => Promise<void> };
 
@@ -65,6 +65,7 @@ export const Scanner = forwardRef<ScannerHandle, { onScan: (text: string) => Pro
       const success = async (text: string) => {
         if (locked.current) return;
         locked.current = true;
+        setState("processing");
         await stop();
         await onScan(text.trim());
       };
@@ -105,10 +106,12 @@ export const Scanner = forwardRef<ScannerHandle, { onScan: (text: string) => Pro
   return <div className="space-y-4">
     <div className="scanner-viewport relative min-h-72 overflow-hidden rounded-2xl border border-slate-700 bg-slate-950 shadow-inner sm:min-h-96 sm:rounded-3xl">
       <div id="qr-reader" className="min-h-72 w-full sm:min-h-96" />
-      {state !== "scanning" && state !== "starting" && <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center text-white"><span className="grid h-20 w-20 place-items-center rounded-3xl border border-white/20 bg-white/10 text-5xl">⌗</span><p className="mt-5 text-xl font-bold">พร้อมสแกน QR</p><p className="mt-1 text-sm text-slate-400">กดปุ่มด้านล่าง แล้วจัด QR ให้อยู่กลางกรอบ</p></div>}
+      {(state === "idle" || state === "error") && <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center text-white"><span className="grid h-20 w-20 place-items-center rounded-3xl border border-white/20 bg-white/10 text-5xl">⌗</span><p className="mt-5 text-xl font-bold">พร้อมสแกน QR</p><p className="mt-1 text-sm text-slate-400">กดปุ่มด้านล่าง แล้วจัด QR ให้อยู่กลางกรอบ</p></div>}
+      {state === "processing" && <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/95 px-6 text-center text-white"><span className="h-12 w-12 animate-spin rounded-full border-4 border-white/20 border-t-red-400"/><p className="mt-5 text-xl font-bold">กำลังบันทึกข้อมูล…</p><p className="mt-1 text-sm text-slate-400">รับ QR แล้ว กรุณารอสักครู่</p></div>}
     </div>
     {error && <p role="alert" className="rounded-2xl bg-red-50 p-4 font-bold text-red-700">❌ {error}</p>}
-    {state !== "scanning" && <button className="primary w-full" disabled={state === "starting"} onClick={start}>{state === "starting" ? "กำลังเปิดกล้อง…" : state === "error" ? "ลองเปิดกล้องอีกครั้ง" : "เริ่มสแกน"}</button>}
+    {(state === "idle" || state === "starting" || state === "error") && <button className="primary w-full" disabled={state === "starting"} onClick={start}>{state === "starting" ? "กำลังเปิดกล้อง…" : state === "error" ? "ลองเปิดกล้องอีกครั้ง" : "เริ่มสแกน"}</button>}
     {state === "scanning" && <p className="rounded-2xl border border-green-200 bg-green-50 p-4 text-center font-bold text-green-800"><span className="mr-2 inline-block h-2 w-2 animate-pulse rounded-full bg-green-600"/>กล้องพร้อม — กำลังค้นหา QR</p>}
+    {state === "processing" && <p className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-center font-bold text-amber-900"><span className="mr-2 inline-block h-2 w-2 animate-pulse rounded-full bg-amber-600"/>กำลังบันทึกข้อมูล…</p>}
   </div>;
 });

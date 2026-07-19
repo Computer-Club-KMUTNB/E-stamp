@@ -19,6 +19,16 @@ export async function middleware(request: NextRequest) {
   );
 
   const { data: { user } } = await supabase.auth.getUser();
+  if (request.nextUrl.pathname === "/login") {
+    if (user) {
+      const staffUrl = request.nextUrl.clone();
+      staffUrl.pathname = "/dev";
+      staffUrl.search = "";
+      return NextResponse.redirect(staffUrl);
+    }
+    return response;
+  }
+
   if (!user) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/login";
@@ -28,4 +38,4 @@ export async function middleware(request: NextRequest) {
   return response;
 }
 
-export const config = { matcher: ["/dev/:path*", "/club/:path*", "/reward/:path*"] };
+export const config = { matcher: ["/login", "/dev/:path*", "/club/:path*", "/reward/:path*"] };
