@@ -56,6 +56,8 @@
   box-sizing: border-box;
 }
 
+html { min-width: 320px; }
+
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   background-color: var(--bg-color);
@@ -65,7 +67,12 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition: background-color 0.3s ease, color 0.3s ease;
+  overflow-x: hidden;
 }
+
+button, input { font: inherit; }
+button { -webkit-tap-highlight-color: transparent; }
+svg { flex-shrink: 0; }
 
 /* Glassmorphism Utilities */
 .glass {
@@ -87,6 +94,8 @@ body {
   transform: translateY(-4px);
   box-shadow: var(--shadow-hover);
 }
+
+@media (hover: none) { .glass-card:hover { transform:none; } }
 
 /* Typography */
 h1, h2, h3, h4, h5, h6 {
