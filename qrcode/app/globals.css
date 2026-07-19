@@ -32,14 +32,13 @@ button,a { @apply focus-visible:outline-none focus-visible:ring-4 focus-visible:
   .site-nav{height:68px}
   .site-brand{gap:.55rem;font-size:.9rem}
   .site-brand-mark{height:2rem;width:2rem;border-radius:.65rem}
-  .site-nav-link{padding:.55rem .65rem;font-size:.8rem}
-  .site-nav-link.staff{display:none}
+  .site-nav-link{min-height:44px;padding:.55rem .65rem;font-size:.8rem;white-space:nowrap}
   .site-shell{padding-left:max(14px,env(safe-area-inset-left));padding-right:max(14px,env(safe-area-inset-right))}
   .card{border-radius:22px;padding:18px}
   .primary,.secondary{min-height:52px;width:100%;padding-left:1rem;padding-right:1rem;font-size:1rem}
   .field{min-height:52px;font-size:16px}
   h1,h2,p{overflow-wrap:anywhere}
 }
-@media(max-width:380px){.site-nav-links{gap:0}.site-nav-link{padding-inline:.45rem}.card{padding:15px}}
+@media(max-width:380px){.site-brand>span:last-child{display:none}.site-nav-links{gap:0}.site-nav-link{padding-inline:.55rem}.card{padding:15px}}
 @media(max-height:600px) and (orientation:landscape){#qr-reader{min-height:220px!important}.scanner-viewport{min-height:220px!important}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
