@@ -47,3 +47,7 @@ cloudflared tunnel --url http://localhost:3000
 กำหนด `NEXT_PUBLIC_SUPABASE_URL` และ `NEXT_PUBLIC_SUPABASE_ANON_KEY` ใน `.env.local` ห้าม commit ไฟล์นี้
 
 QR เก็บเฉพาะค่า SHA-256 ของรหัสนักศึกษา (`hashed_user_id`) ไม่ได้เก็บรหัสนักศึกษาจริง
+
+## สิทธิ์เจ้าหน้าที่
+
+หน้า `/dev`, `/club/*` และ `/reward/*` ต้องเข้าสู่ระบบด้วยบัญชี Supabase Auth ก่อน ส่วน `/register` ยังเป็นหน้าสาธารณะตามเดิม ดูขั้นตอนตั้งค่าและ RLS ที่ [`../ACCESS_CONTROL.md`](../ACCESS_CONTROL.md)

@@ -1,12 +1,12 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// https://vite.dev/config/
-export default defineConfig({
-  base: '/dashboard/',
+// ใช้ root URL ตอนพัฒนา แต่คง /dashboard/ สำหรับ production deployment
+export default defineConfig(({ command }) => ({
+  base: command === 'serve' ? '/' : '/dashboard/',
   plugins: [react()],
   build: {
     outDir: '../dist/dashboard',
     emptyOutDir: true
   }
-})
+}))

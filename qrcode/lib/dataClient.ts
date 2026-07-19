@@ -51,24 +51,14 @@ export async function getStudentByToken(qrToken: string): Promise<Student | null
 
 export async function createStudent(studentCode: string, name: string): Promise<Student> {
   const hashedUserId = await hashStudentCode(studentCode);
-  const existing = await getStudentByToken(hashedUserId);
-  if (existing) return existing;
-
-  const { data, error } = await supabase
-    .from("user_info")
-    .insert({ hashed_user_id: hashedUserId, student_id: studentCode, name: name.trim() })
-    .select("hashed_user_id, student_id, name, created_at")
-    .single<UserInfoRow>();
+  const createdAt = new Date().toISOString();
+  const { error } = await supabase.rpc("register_attendee", {
+    p_hashed_user_id: hashedUserId,
+    p_student_id: studentCode,
+    p_name: name.trim(),
+  });
   if (error) fail("ลงทะเบียนผู้เข้าร่วมไม่สำเร็จ", error);
-
-  const { error: stampError } = await supabase
-    .from("user_stamps")
-    .insert({ hashed_user_id: hashedUserId });
-  if (stampError) {
-    await supabase.from("user_info").delete().eq("hashed_user_id", hashedUserId);
-    fail("สร้างสมุดสะสมแสตมป์ไม่สำเร็จ", stampError);
-  }
-  return toStudent(data);
+  return { id: hashedUserId, studentCode, name: name.trim(), qrToken: hashedUserId, createdAt };
 }
 
 export async function getClubByToken(token: string): Promise<Club | null> {
