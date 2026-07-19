@@ -2,7 +2,7 @@
   "name": "e-stamp-root",
   "private": true,
   "engines": {
-    "node": ">=20.19.0 <21",
+    "node": "24.x",
     "npm": ">=10"
   },
   "workspaces": [
@@ -20,7 +20,13 @@
     "build": "npm run build --workspaces"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.110.7"
+    "@supabase/supabase-js": "^2.110.7",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "overrides": {
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
   },
   "devDependencies": {
     "concurrently": "^10.0.3"
