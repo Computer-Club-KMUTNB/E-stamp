@@ -24,7 +24,7 @@ Next.js middleware ใน `qrcode/middleware.ts` บังคับ login ก่
 1. เปิด Authentication > Providers และเปิด Email provider
 2. ปิด public sign-up หากผู้เข้าร่วมไม่ควรสร้าง staff account (`Allow new users to sign up` = off)
 3. สร้างบัญชีเจ้าหน้าที่ที่ Authentication > Users > Add user
-4. รัน `supabase/migrations/202607190001_access_control.sql` ใน SQL Editor หรือผ่าน Supabase CLI
+4. รันไฟล์ใน `supabase/migrations/` ตามลำดับชื่อไฟล์ผ่าน SQL Editor หรือ Supabase CLI
 5. เปิด Realtime สำหรับ `activity_log` หาก Dashboard ต้องอัปเดตทันที
 6. ตั้ง environment variables ตาม `.env.example` ของ `qrcode` และ `dashboard`
 

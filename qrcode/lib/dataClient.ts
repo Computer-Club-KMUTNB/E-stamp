@@ -15,6 +15,8 @@ type UserStampsRow = {
   front_booths_visited: string[];
   back_booths_visited: string[];
   is_collect_reward: boolean;
+  front_reward_collected: boolean;
+  back_reward_collected: boolean;
   updated_at: string;
 };
 
@@ -100,7 +102,7 @@ export async function getAllClubs(): Promise<Club[]> {
 async function getStampRow(studentId: string): Promise<UserStampsRow | null> {
   const { data, error } = await supabase
     .from("user_stamps")
-    .select("hashed_user_id, front_booths_visited, back_booths_visited, is_collect_reward, updated_at")
+    .select("hashed_user_id, front_booths_visited, back_booths_visited, is_collect_reward, front_reward_collected, back_reward_collected, updated_at")
     .eq("hashed_user_id", studentId)
     .maybeSingle<UserStampsRow>();
   if (error) fail("โหลดแสตมป์ไม่สำเร็จ", error);
@@ -152,7 +154,9 @@ export async function getRewardBoothByToken(token: string): Promise<RewardBooth 
 
 export async function getRewardClaim(studentId: string, location: Location): Promise<RewardClaim | null> {
   const row = await getStampRow(studentId);
-  return row?.is_collect_reward
+  if (!row) return null;
+  const collected = location === "front" ? row.front_reward_collected : row.back_reward_collected;
+  return collected
     ? { id: `reward:${studentId}`, studentId, location, claimedAt: row.updated_at }
     : null;
 }
@@ -161,9 +165,10 @@ export async function createRewardClaim(studentId: string, location: Location): 
   const existing = await getRewardClaim(studentId, location);
   if (existing) return { claim: existing, created: false };
   const claimedAt = new Date().toISOString();
+  const rewardColumn = location === "front" ? "front_reward_collected" : "back_reward_collected";
   const { error } = await supabase
     .from("user_stamps")
-    .update({ is_collect_reward: true, updated_at: claimedAt })
+    .update({ [rewardColumn]: true, is_collect_reward: true, updated_at: claimedAt })
     .eq("hashed_user_id", studentId);
   if (error) fail("บันทึกการรับรางวัลไม่สำเร็จ", error);
   const { error: logError } = await supabase.from("activity_log").insert({
