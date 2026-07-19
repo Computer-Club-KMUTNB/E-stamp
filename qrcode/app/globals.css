@@ -14,6 +14,8 @@ button,a { @apply focus-visible:outline-none focus-visible:ring-4 focus-visible:
 .site-nav { @apply flex h-20 items-center justify-between border-b; border-color:var(--line); }
 .site-brand { @apply flex items-center gap-3 font-black tracking-wider no-underline; font-family:'Manrope',sans-serif; }
 .site-brand-mark { @apply grid h-9 w-9 place-items-center rounded-xl text-sm text-white; background:var(--brand); }
+.site-brand-copy { @apply flex flex-col leading-none; }
+.site-brand-copy small { @apply mt-1 text-[9px] font-bold tracking-[.16em]; color:var(--muted); }
 .site-nav-links { @apply flex items-center gap-1; }
 .site-nav-link { @apply rounded-xl px-3 py-2 text-sm font-bold text-slate-600 no-underline hover:bg-white hover:text-slate-950; }
 .card { @apply rounded-3xl border bg-white/90 p-5 sm:p-8; border-color:var(--line); box-shadow:0 16px 45px rgba(23,32,29,.07); }
@@ -39,6 +41,6 @@ button,a { @apply focus-visible:outline-none focus-visible:ring-4 focus-visible:
   .field{min-height:52px;font-size:16px}
   h1,h2,p{overflow-wrap:anywhere}
 }
-@media(max-width:380px){.site-brand>span:last-child{display:none}.site-nav-links{gap:0}.site-nav-link{padding-inline:.55rem}.card{padding:15px}}
+@media(max-width:380px){.site-brand-copy{display:none}.site-nav-links{gap:0}.site-nav-link{padding-inline:.55rem}.card{padding:15px}}
 @media(max-height:600px) and (orientation:landscape){#qr-reader{min-height:220px!important}.scanner-viewport{min-height:220px!important}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
