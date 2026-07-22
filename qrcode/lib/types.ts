@@ -11,6 +11,7 @@ export interface Student {
 
 export interface Club {
   id: string;
+  boothNumber: string;
   name: string;
   location: Zone;
   token: string;
@@ -25,13 +26,11 @@ export interface Stamp {
 
 export interface RewardBooth {
   id: string;
-  location: Zone;
   token: string;
 }
 
 export interface RewardClaim {
   id: string;
   studentId: string;
-  location: Zone;
   claimedAt: string;
 }

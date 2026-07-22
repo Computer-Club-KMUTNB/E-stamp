@@ -66,22 +66,23 @@ export async function createStudent(studentCode: string, name: string): Promise<
 export async function getClubByToken(token: string): Promise<Club | null> {
   const { data, error } = await supabase
     .from("booths")
-    .select("id, name, zone")
+    .select("id, booth_number, name, zone")
     .eq("id", token)
-    .maybeSingle<{ id: string; name: string; zone: Zone }>();
+    .maybeSingle<{ id: string; booth_number: string; name: string; zone: Zone }>();
   if (error) fail("โหลดข้อมูลบูธไม่สำเร็จ", error);
-  return data ? { id: data.id, name: data.name, location: data.zone, token: data.id } : null;
+  return data ? { id: data.id, boothNumber: data.booth_number, name: data.name, location: data.zone, token: data.id } : null;
 }
 
 export async function getClubsByLocation(location: Location): Promise<Club[]> {
   const { data, error } = await supabase
     .from("booths")
-    .select("id, name, zone")
+    .select("id, booth_number, name, zone")
     .eq("zone", location)
-    .order("name");
+    .order("booth_number");
   if (error) fail("โหลดรายการบูธไม่สำเร็จ", error);
   return (data ?? []).map((row) => ({
     id: row.id,
+    boothNumber: row.booth_number,
     name: row.name,
     location: row.zone as Zone,
     token: row.id,
@@ -89,10 +90,11 @@ export async function getClubsByLocation(location: Location): Promise<Club[]> {
 }
 
 export async function getAllClubs(): Promise<Club[]> {
-  const { data, error } = await supabase.from("booths").select("id, name, zone").order("zone").order("name");
+  const { data, error } = await supabase.from("booths").select("id, booth_number, name, zone").order("zone").order("booth_number");
   if (error) fail("โหลดรายการบูธไม่สำเร็จ", error);
   return (data ?? []).map((row) => ({
     id: row.id,
+    boothNumber: row.booth_number,
     name: row.name,
     location: row.zone as Zone,
     token: row.id,
@@ -148,27 +150,24 @@ export async function getStampsForStudent(studentId: string): Promise<Stamp[]> {
 }
 
 export async function getRewardBoothByToken(token: string): Promise<RewardBooth | null> {
-  const zone = token === "front" || token === "reward-front" ? "front" : token === "back" || token === "reward-back" ? "back" : null;
-  return zone ? { id: `reward-${zone}`, location: zone, token: `reward-${zone}` } : null;
+  return token === "reward" ? { id: "reward", token: "reward" } : null;
 }
 
-export async function getRewardClaim(studentId: string, location: Location): Promise<RewardClaim | null> {
+export async function getRewardClaim(studentId: string): Promise<RewardClaim | null> {
   const row = await getStampRow(studentId);
   if (!row) return null;
-  const collected = location === "front" ? row.front_reward_collected : row.back_reward_collected;
-  return collected
-    ? { id: `reward:${studentId}`, studentId, location, claimedAt: row.updated_at }
+  return row.is_collect_reward
+    ? { id: `reward:${studentId}`, studentId, claimedAt: row.updated_at }
     : null;
 }
 
-export async function createRewardClaim(studentId: string, location: Location): Promise<{ claim: RewardClaim; created: boolean }> {
-  const existing = await getRewardClaim(studentId, location);
+export async function createRewardClaim(studentId: string): Promise<{ claim: RewardClaim; created: boolean }> {
+  const existing = await getRewardClaim(studentId);
   if (existing) return { claim: existing, created: false };
   const claimedAt = new Date().toISOString();
-  const rewardColumn = location === "front" ? "front_reward_collected" : "back_reward_collected";
   const { error } = await supabase
     .from("user_stamps")
-    .update({ [rewardColumn]: true, is_collect_reward: true, updated_at: claimedAt })
+    .update({ is_collect_reward: true, updated_at: claimedAt })
     .eq("hashed_user_id", studentId);
   if (error) fail("บันทึกการรับรางวัลไม่สำเร็จ", error);
   const { error: logError } = await supabase.from("activity_log").insert({
@@ -178,7 +177,7 @@ export async function createRewardClaim(studentId: string, location: Location): 
   });
   if (logError) fail("บันทึกกิจกรรมไม่สำเร็จ", logError);
   return {
-    claim: { id: `reward:${studentId}`, studentId, location, claimedAt },
+    claim: { id: `reward:${studentId}`, studentId, claimedAt },
     created: true,
   };
 }

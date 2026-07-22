@@ -28,4 +28,8 @@ Next.js middleware ใน `qrcode/middleware.ts` บังคับ login ก่
 5. เปิด Realtime สำหรับ `activity_log` หาก Dashboard ต้องอัปเดตทันที
 6. ตั้ง environment variables ตาม `.env.example` ของ `qrcode` และ `dashboard`
 
+หลัง migration `202607220001_booth_number_by_zone.sql` ให้กรอก `id` หรือ `booth_number`
+เป็นเลขบูธที่ต้องการ เช่น `01` พร้อมเลือก `zone` ระบบจะสร้างรหัสภายในเป็น
+`front-01` หรือ `back-01` อัตโนมัติ จึงใช้เลขบูธเดียวกันคนละสถานที่ได้
+
 บัญชี authenticated ทุกบัญชีในโปรเจกต์นี้ถือเป็น staff/organizer และเข้าถึง Dashboard ได้ หากต้องแยกสิทธิ์สองกลุ่มในอนาคต ให้เพิ่ม role ใน `app_metadata` และตรวจ role ใน RLS policies
