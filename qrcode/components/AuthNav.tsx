@@ -15,6 +15,6 @@ export function AuthNav() {
     return () => data.subscription.unsubscribe();
   }, []);
 
-  if (!signedIn || pathname === "/register") return null;
-  return <button className="site-nav-link staff" onClick={async () => { await supabase.auth.signOut(); router.replace("/login"); router.refresh(); }}>ออกจากระบบ</button>;
+  if (!signedIn || pathname === "/register" || pathname === "/login") return null;
+  return <button className="site-nav-link staff" onClick={async () => { await supabase.auth.signOut(); router.replace("/staff-login"); router.refresh(); }}>ออกจากระบบ</button>;
 }

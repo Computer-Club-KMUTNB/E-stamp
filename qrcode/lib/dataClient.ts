@@ -20,6 +20,15 @@ type UserStampsRow = {
   updated_at: string;
 };
 
+type ParticipantLoginRow = {
+  hashed_user_id: string;
+  student_id: string;
+  name: string;
+  created_at: string;
+  front_booths_visited: string[];
+  back_booths_visited: string[];
+};
+
 const boothNumberCollator = new Intl.Collator("th", {
   numeric: true,
   sensitivity: "base",
@@ -72,8 +81,33 @@ export async function createStudent(studentCode: string, name: string): Promise<
     p_student_id: studentCode,
     p_name: name.trim(),
   });
-  if (error) fail("ลงทะเบียนผู้เข้าร่วมไม่สำเร็จ", error);
+  if (error) {
+    if (/attendee already exists|duplicate|มีผู้ใช้นี้อยู่แล้ว/i.test(error.message)) {
+      throw new Error("มีผู้ใช้นี้อยู่แล้ว กรุณาเข้าสู่ระบบ");
+    }
+    fail("ลงทะเบียนผู้เข้าร่วมไม่สำเร็จ", error);
+  }
   return { id: hashedUserId, studentCode, name: name.trim(), qrToken: hashedUserId, createdAt };
+}
+
+export async function loginStudent(studentCode: string, name: string): Promise<{ student: Student; visitedClubIds: string[] } | null> {
+  const hashedUserId = await hashStudentCode(studentCode);
+  const { data, error } = await supabase.rpc("login_attendee", {
+    p_hashed_user_id: hashedUserId,
+    p_name: name.trim(),
+  }).maybeSingle<ParticipantLoginRow>();
+  if (error) fail("เข้าสู่ระบบไม่สำเร็จ", error);
+  if (!data) return null;
+  return {
+    student: {
+      id: data.hashed_user_id,
+      studentCode: data.student_id,
+      name: data.name,
+      qrToken: data.hashed_user_id,
+      createdAt: data.created_at,
+    },
+    visitedClubIds: [...data.front_booths_visited, ...data.back_booths_visited],
+  };
 }
 
 export async function getClubByToken(token: string): Promise<Club | null> {

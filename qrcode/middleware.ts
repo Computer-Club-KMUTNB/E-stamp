@@ -19,7 +19,7 @@ export async function middleware(request: NextRequest) {
   );
 
   const { data: { user } } = await supabase.auth.getUser();
-  if (request.nextUrl.pathname === "/login") {
+  if (request.nextUrl.pathname === "/staff-login") {
     if (user) {
       const staffUrl = request.nextUrl.clone();
       staffUrl.pathname = "/dev";
@@ -31,11 +31,11 @@ export async function middleware(request: NextRequest) {
 
   if (!user) {
     const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = "/login";
+    loginUrl.pathname = "/staff-login";
     loginUrl.searchParams.set("next", `${request.nextUrl.pathname}${request.nextUrl.search}`);
     return NextResponse.redirect(loginUrl);
   }
   return response;
 }
 
-export const config = { matcher: ["/login", "/dev/:path*", "/dashboard/:path*", "/club/:path*", "/reward/:path*"] };
+export const config = { matcher: ["/staff-login", "/dev/:path*", "/dashboard/:path*", "/club/:path*", "/reward/:path*"] };
