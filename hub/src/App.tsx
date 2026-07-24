@@ -8,7 +8,7 @@ function App() {
   return (
     <main className="hub-container">
       <nav className="hub-nav" aria-label="เมนูหลัก">
-        <a className="brand-mark" href="/" aria-label="E-stamp home"><span>E</span> E-STAMP</a>
+        <a className="brand-mark" href="/" aria-label="E-stamp home"><span><img src="/site-logo.png" alt="" /></span> E-STAMP</a>
         <span className="live-pill"><i /> SYSTEM ONLINE</span>
       </nav>
 
