@@ -65,8 +65,8 @@ export const Scanner = forwardRef<ScannerHandle, { onScan: (text: string) => Pro
       const success = async (text: string) => {
         if (locked.current) return;
         locked.current = true;
-        setState("processing");
         await stop();
+        setState("processing");
         await onScan(text.trim());
       };
 
@@ -85,7 +85,7 @@ export const Scanner = forwardRef<ScannerHandle, { onScan: (text: string) => Pro
         scannerRef.current = scanner;
         await scanner.start(preferred.id, config, success, () => {});
       }
-      setState("scanning");
+      if (!locked.current) setState("scanning");
     } catch (caught) {
       await stop();
       setError(cameraErrorMessage(caught));
