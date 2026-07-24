@@ -20,6 +20,19 @@ type UserStampsRow = {
   updated_at: string;
 };
 
+const boothNumberCollator = new Intl.Collator("th", {
+  numeric: true,
+  sensitivity: "base",
+});
+
+function sortClubsByBoothNumber(clubs: Club[]): Club[] {
+  return clubs.sort(
+    (left, right) =>
+      boothNumberCollator.compare(left.boothNumber, right.boothNumber) ||
+      left.name.localeCompare(right.name, "th"),
+  );
+}
+
 function fail(message: string, error: { message: string } | null): never {
   throw new Error(error ? `${message}: ${error.message}` : message);
 }
@@ -80,25 +93,25 @@ export async function getClubsByLocation(location: Location): Promise<Club[]> {
     .eq("zone", location)
     .order("booth_number");
   if (error) fail("โหลดรายการบูธไม่สำเร็จ", error);
-  return (data ?? []).map((row) => ({
+  return sortClubsByBoothNumber((data ?? []).map((row) => ({
     id: row.id,
     boothNumber: row.booth_number,
     name: row.name,
     location: row.zone as Zone,
     token: row.id,
-  }));
+  })));
 }
 
 export async function getAllClubs(): Promise<Club[]> {
   const { data, error } = await supabase.from("booths").select("id, booth_number, name, zone").order("zone").order("booth_number");
   if (error) fail("โหลดรายการบูธไม่สำเร็จ", error);
-  return (data ?? []).map((row) => ({
+  return sortClubsByBoothNumber((data ?? []).map((row) => ({
     id: row.id,
     boothNumber: row.booth_number,
     name: row.name,
     location: row.zone as Zone,
     token: row.id,
-  }));
+  })));
 }
 
 async function getStampRow(studentId: string): Promise<UserStampsRow | null> {

@@ -31,6 +31,8 @@ a { color:inherit; }
 .arrow { color:#9caaa5; transition:.2s; }.app-card:hover .arrow { color:var(--brand); transform:translate(3px,-3px); }
 .app-card h3 { margin:7px 0 6px; font:800 1.8rem 'Manrope'; letter-spacing:-.035em; }
 .app-card p { max-width:480px; color:var(--muted); line-height:1.7; }
+.hub-footer { display:flex; align-items:center; justify-content:center; gap:12px; margin-top:56px; padding-top:24px; border-top:1px solid var(--line); color:var(--muted); font-size:.9rem; font-weight:600; text-align:center; }
+.hub-footer img { width:34px; height:34px; object-fit:contain; }
 @media(max-width:800px){.hub-container{padding:0 max(18px,env(safe-area-inset-right)) max(36px,env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left))}.hub-nav{height:72px}.hub-hero{padding:clamp(44px,12vw,60px) 0 60px}.hub-hero h1{font-size:clamp(2.65rem,13vw,3.35rem);overflow-wrap:anywhere}.hub-hero>p{margin:22px 0 28px;font-size:1rem;line-height:1.7}.register-cta{width:100%;justify-content:center}.section-heading{align-items:start;flex-direction:column}.section-heading>p{display:none}.cards-grid{grid-template-columns:1fr}.app-card{min-height:190px;padding:22px}.app-card h3{font-size:1.5rem}.live-pill{font-size:0}.live-pill i{display:block}}
 @media(max-width:380px){.brand-mark{font-size:13px}.hub-container{padding-left:14px;padding-right:14px}.hub-hero h1{font-size:2.45rem}.app-card{border-radius:20px}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}

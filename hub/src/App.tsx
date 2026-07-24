@@ -19,6 +19,7 @@ function App() {
       </section>
 
       <section className="module-section" aria-labelledby="public-info-title"><div className="section-heading"><div><span>สำหรับผู้เข้าร่วม</span><h2 id="public-info-title">เริ่มต้นได้ใน 3 ขั้นตอน</h2></div></div><div className="cards-grid">{[['01','ลงทะเบียน','กรอกชื่อและรหัสนักศึกษาเพื่อรับ QR ส่วนตัว'],['02','สะสมแสตมป์','แสดง QR ให้เจ้าหน้าที่ประจำบูธสแกน'],['03','รับรางวัล','สะสมครบทุกบูธแล้วนำ QR ไปตรวจรับรางวัล']].map(([no,title,detail])=><article className="app-card" key={no}><div className="card-top"><div className="card-icon-wrapper">{no}</div></div><div><h3>{title}</h3><p>{detail}</p></div></article>)}</div></section>
+      <footer className="hub-footer"><img src="/cck_logo-black.png" alt="โลโก้ชมรมคอมพิวเตอร์ มจพ." /><span>พัฒนาโดย ชมรมคอมพิวเตอร์ มจพ.</span></footer>
     </main>
   );
 }
