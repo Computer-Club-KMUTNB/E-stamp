@@ -18,7 +18,11 @@ export default function RegisterPage() {
     if (name.trim().length < 2) return setError("กรุณากรอกชื่อ–นามสกุล");
     if (!/^\d{13}$/.test(code)) return setError("รหัสนักศึกษาต้องเป็นตัวเลข 13 หลัก");
     setLoading(true); setError("");
-    try { setStudent(await createStudent(code, name)); }
+    try {
+      const createdStudent = await createStudent(code, name);
+      window.sessionStorage.setItem("participant_session", JSON.stringify({ student: createdStudent, visitedClubIds: [] }));
+      window.location.replace("/login");
+    }
     catch (caught) { setError(caught instanceof Error ? caught.message : "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง"); }
     finally { setLoading(false); }
   }

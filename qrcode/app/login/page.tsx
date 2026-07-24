@@ -22,6 +22,18 @@ export default function ParticipantLoginPage() {
 
   useEffect(() => {
     getAllClubs().then(setClubs).catch(() => setClubs([]));
+    const savedSession = window.sessionStorage.getItem("participant_session");
+    if (savedSession) {
+      try {
+        const parsed = JSON.parse(savedSession) as { student?: Student; visitedClubIds?: string[] };
+        if (parsed.student?.id && parsed.student.qrToken) {
+          setStudent(parsed.student);
+          setVisitedClubIds(parsed.visitedClubIds ?? []);
+        }
+      } catch {
+        window.sessionStorage.removeItem("participant_session");
+      }
+    }
   }, []);
 
   async function submit(event: FormEvent) {
@@ -37,6 +49,7 @@ export default function ParticipantLoginPage() {
       }
       setStudent(result.student);
       setVisitedClubIds(result.visitedClubIds);
+      window.sessionStorage.setItem("participant_session", JSON.stringify(result));
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
     } finally { setLoading(false); }
