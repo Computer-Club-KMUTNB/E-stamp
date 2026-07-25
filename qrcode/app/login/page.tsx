@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
+import { PARTICIPANT_SESSION_KEY, notifyParticipantSessionChange } from "@/components/AuthNav";
 import { QrImage } from "@/components/QrImage";
 import { getAllClubs, loginStudent } from "@/lib/dataClient";
 import { locationNames } from "@/lib/mockData";
@@ -22,7 +23,7 @@ export default function ParticipantLoginPage() {
 
   useEffect(() => {
     getAllClubs().then(setClubs).catch(() => setClubs([]));
-    const savedSession = window.sessionStorage.getItem("participant_session");
+    const savedSession = window.sessionStorage.getItem(PARTICIPANT_SESSION_KEY);
     if (savedSession) {
       try {
         const parsed = JSON.parse(savedSession) as { student?: Student; visitedClubIds?: string[] };
@@ -31,7 +32,7 @@ export default function ParticipantLoginPage() {
           setVisitedClubIds(parsed.visitedClubIds ?? []);
         }
       } catch {
-        window.sessionStorage.removeItem("participant_session");
+        window.sessionStorage.removeItem(PARTICIPANT_SESSION_KEY);
       }
     }
   }, []);
@@ -49,7 +50,8 @@ export default function ParticipantLoginPage() {
       }
       setStudent(result.student);
       setVisitedClubIds(result.visitedClubIds);
-      window.sessionStorage.setItem("participant_session", JSON.stringify(result));
+      window.sessionStorage.setItem(PARTICIPANT_SESSION_KEY, JSON.stringify(result));
+      notifyParticipantSessionChange();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
     } finally { setLoading(false); }

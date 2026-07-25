@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useState } from "react";
+import { PARTICIPANT_SESSION_KEY } from "@/components/AuthNav";
 import { QrImage } from "@/components/QrImage";
 import { createStudent } from "@/lib/dataClient";
 import type { Student } from "@/lib/types";
@@ -20,7 +21,7 @@ export default function RegisterPage() {
     setLoading(true); setError("");
     try {
       const createdStudent = await createStudent(code, name);
-      window.sessionStorage.setItem("participant_session", JSON.stringify({ student: createdStudent, visitedClubIds: [] }));
+      window.sessionStorage.setItem(PARTICIPANT_SESSION_KEY, JSON.stringify({ student: createdStudent, visitedClubIds: [] }));
       window.location.replace("/login");
     }
     catch (caught) { setError(caught instanceof Error ? caught.message : "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง"); }
