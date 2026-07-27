@@ -36,6 +36,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!isAdminLoggedIn()) {
+      adminLogout(); // clear any stale session
       window.location.replace("/admin-login?next=/dashboard");
       return;
     }
