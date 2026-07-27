@@ -7,6 +7,7 @@ type UserInfoRow = {
   hashed_user_id: string;
   student_id: string | null;
   name: string;
+  faculty: string;
   created_at: string;
 };
 
@@ -22,6 +23,7 @@ type ParticipantLoginRow = {
   hashed_user_id: string;
   student_id: string;
   name: string;
+  faculty: string;
   created_at: string;
   front_booths_visited: string[];
   back_booths_visited: string[];
@@ -49,6 +51,7 @@ function toStudent(row: UserInfoRow): Student {
     id: row.hashed_user_id,
     studentCode: row.student_id ?? "",
     name: row.name,
+    faculty: row.faculty,
     qrToken: row.hashed_user_id,
     createdAt: row.created_at,
   };
@@ -64,20 +67,21 @@ export async function getStudentByToken(qrToken: string): Promise<Student | null
   if (!/^[a-f0-9]{64}$/i.test(qrToken)) return null;
   const { data, error } = await supabase
     .from("user_info")
-    .select("hashed_user_id, student_id, name, created_at")
+    .select("hashed_user_id, student_id, name, faculty, created_at")
     .eq("hashed_user_id", qrToken.toLowerCase())
     .maybeSingle<UserInfoRow>();
   if (error) fail("ค้นหาผู้เข้าร่วมไม่สำเร็จ", error);
   return data ? toStudent(data) : null;
 }
 
-export async function createStudent(studentCode: string, name: string): Promise<Student> {
+export async function createStudent(studentCode: string, name: string, faculty: string): Promise<Student> {
   const hashedUserId = await hashStudentCode(studentCode);
   const createdAt = new Date().toISOString();
   const { error } = await supabase.rpc("register_attendee", {
     p_hashed_user_id: hashedUserId,
     p_student_id: studentCode,
     p_name: name.trim(),
+    p_faculty: faculty,
   });
   if (error) {
     if (/attendee already exists|duplicate|มีผู้ใช้นี้อยู่แล้ว/i.test(error.message)) {
@@ -85,7 +89,7 @@ export async function createStudent(studentCode: string, name: string): Promise<
     }
     fail("ลงทะเบียนผู้เข้าร่วมไม่สำเร็จ", error);
   }
-  return { id: hashedUserId, studentCode, name: name.trim(), qrToken: hashedUserId, createdAt };
+  return { id: hashedUserId, studentCode, name: name.trim(), faculty, qrToken: hashedUserId, createdAt };
 }
 
 export async function loginStudent(studentCode: string, name: string): Promise<{ student: Student; visitedClubIds: string[] } | null> {
@@ -101,6 +105,7 @@ export async function loginStudent(studentCode: string, name: string): Promise<{
       id: data.hashed_user_id,
       studentCode: data.student_id,
       name: data.name,
+      faculty: data.faculty,
       qrToken: data.hashed_user_id,
       createdAt: data.created_at,
     },

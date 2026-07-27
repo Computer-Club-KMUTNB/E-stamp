@@ -5,6 +5,7 @@ export interface Student {
   id: string;
   studentCode: string;
   name: string;
+  faculty: string;
   qrToken: string;
   createdAt: string;
 }
