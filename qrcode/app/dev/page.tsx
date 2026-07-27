@@ -27,8 +27,6 @@ export default function DevPage() {
     }).finally(() => setLoading(false));
   }, []);
 
-  if (!authed) return null;
-
   const normalizedQuery = query.trim().toLowerCase();
   const filteredClubs = useMemo(() => {
     if (!normalizedQuery) return clubs;
@@ -38,6 +36,8 @@ export default function DevPage() {
       return name.includes(normalizedQuery) || boothNumber.includes(normalizedQuery);
     });
   }, [clubs, normalizedQuery]);
+
+  if (!authed) return null;
 
   return <div className="py-8 sm:py-12">
     <header className="border-b pb-8" style={{borderColor:"var(--line)"}}>
