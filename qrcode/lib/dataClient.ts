@@ -15,8 +15,6 @@ type UserStampsRow = {
   front_booths_visited: string[];
   back_booths_visited: string[];
   is_collect_reward: boolean;
-  front_reward_collected: boolean;
-  back_reward_collected: boolean;
   updated_at: string;
 };
 
@@ -151,7 +149,7 @@ export async function getAllClubs(): Promise<Club[]> {
 async function getStampRow(studentId: string): Promise<UserStampsRow | null> {
   const { data, error } = await supabase
     .from("user_stamps")
-    .select("hashed_user_id, front_booths_visited, back_booths_visited, is_collect_reward, front_reward_collected, back_reward_collected, updated_at")
+    .select("hashed_user_id, front_booths_visited, back_booths_visited, is_collect_reward, updated_at")
     .eq("hashed_user_id", studentId)
     .maybeSingle<UserStampsRow>();
   if (error) fail("โหลดแสตมป์ไม่สำเร็จ", error);
@@ -209,20 +207,17 @@ export async function getRewardClaim(studentId: string): Promise<RewardClaim | n
 }
 
 export async function createRewardClaim(studentId: string): Promise<{ claim: RewardClaim; created: boolean }> {
-  const existing = await getRewardClaim(studentId);
-  if (existing) return { claim: existing, created: false };
   const claimedAt = new Date().toISOString();
-  const { error } = await supabase
-    .from("user_stamps")
-    .update({ is_collect_reward: true, updated_at: claimedAt })
-    .eq("hashed_user_id", studentId);
+  const { data: result, error } = await supabase
+    .rpc("redeem_reward", { p_hashed_user_id: studentId })
+    .single<string>();
   if (error) fail("บันทึกการรับรางวัลไม่สำเร็จ", error);
-  const { error: logError } = await supabase.from("activity_log").insert({
-    hashed_user_id: studentId,
-    action_type: "redeem_reward",
-    booth_id: null,
-  });
-  if (logError) fail("บันทึกกิจกรรมไม่สำเร็จ", logError);
+  if (result === "already_claimed") {
+    return { claim: { id: `reward:${studentId}`, studentId, claimedAt }, created: false };
+  }
+  if (result === "not_eligible") {
+    throw new Error("ยังสะสมแสตมป์ไม่ครบเงื่อนไข (ต้องการอย่างน้อย 5 บูธหน้า + 5 บูธหลัง)");
+  }
   return {
     claim: { id: `reward:${studentId}`, studentId, claimedAt },
     created: true,
