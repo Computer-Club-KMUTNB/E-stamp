@@ -7,6 +7,7 @@ type UserInfoRow = {
   hashed_user_id: string;
   student_id: string | null;
   name: string;
+  faculty: string;
   created_at: string;
 };
 
@@ -15,8 +16,6 @@ type UserStampsRow = {
   front_booths_visited: string[];
   back_booths_visited: string[];
   is_collect_reward: boolean;
-  front_reward_collected: boolean;
-  back_reward_collected: boolean;
   updated_at: string;
 };
 
@@ -24,6 +23,7 @@ type ParticipantLoginRow = {
   hashed_user_id: string;
   student_id: string;
   name: string;
+  faculty: string;
   created_at: string;
   front_booths_visited: string[];
   back_booths_visited: string[];
@@ -51,6 +51,7 @@ function toStudent(row: UserInfoRow): Student {
     id: row.hashed_user_id,
     studentCode: row.student_id ?? "",
     name: row.name,
+    faculty: row.faculty,
     qrToken: row.hashed_user_id,
     createdAt: row.created_at,
   };
@@ -66,20 +67,21 @@ export async function getStudentByToken(qrToken: string): Promise<Student | null
   if (!/^[a-f0-9]{64}$/i.test(qrToken)) return null;
   const { data, error } = await supabase
     .from("user_info")
-    .select("hashed_user_id, student_id, name, created_at")
+    .select("hashed_user_id, student_id, name, faculty, created_at")
     .eq("hashed_user_id", qrToken.toLowerCase())
     .maybeSingle<UserInfoRow>();
   if (error) fail("ค้นหาผู้เข้าร่วมไม่สำเร็จ", error);
   return data ? toStudent(data) : null;
 }
 
-export async function createStudent(studentCode: string, name: string): Promise<Student> {
+export async function createStudent(studentCode: string, name: string, faculty: string): Promise<Student> {
   const hashedUserId = await hashStudentCode(studentCode);
   const createdAt = new Date().toISOString();
   const { error } = await supabase.rpc("register_attendee", {
     p_hashed_user_id: hashedUserId,
     p_student_id: studentCode,
     p_name: name.trim(),
+    p_faculty: faculty,
   });
   if (error) {
     if (/attendee already exists|duplicate|มีผู้ใช้นี้อยู่แล้ว/i.test(error.message)) {
@@ -87,7 +89,7 @@ export async function createStudent(studentCode: string, name: string): Promise<
     }
     fail("ลงทะเบียนผู้เข้าร่วมไม่สำเร็จ", error);
   }
-  return { id: hashedUserId, studentCode, name: name.trim(), qrToken: hashedUserId, createdAt };
+  return { id: hashedUserId, studentCode, name: name.trim(), faculty, qrToken: hashedUserId, createdAt };
 }
 
 export async function loginStudent(studentCode: string, name: string): Promise<{ student: Student; visitedClubIds: string[] } | null> {
@@ -103,6 +105,7 @@ export async function loginStudent(studentCode: string, name: string): Promise<{
       id: data.hashed_user_id,
       studentCode: data.student_id,
       name: data.name,
+      faculty: data.faculty,
       qrToken: data.hashed_user_id,
       createdAt: data.created_at,
     },
@@ -151,7 +154,7 @@ export async function getAllClubs(): Promise<Club[]> {
 async function getStampRow(studentId: string): Promise<UserStampsRow | null> {
   const { data, error } = await supabase
     .from("user_stamps")
-    .select("hashed_user_id, front_booths_visited, back_booths_visited, is_collect_reward, front_reward_collected, back_reward_collected, updated_at")
+    .select("hashed_user_id, front_booths_visited, back_booths_visited, is_collect_reward, updated_at")
     .eq("hashed_user_id", studentId)
     .maybeSingle<UserStampsRow>();
   if (error) fail("โหลดแสตมป์ไม่สำเร็จ", error);
@@ -209,20 +212,17 @@ export async function getRewardClaim(studentId: string): Promise<RewardClaim | n
 }
 
 export async function createRewardClaim(studentId: string): Promise<{ claim: RewardClaim; created: boolean }> {
-  const existing = await getRewardClaim(studentId);
-  if (existing) return { claim: existing, created: false };
   const claimedAt = new Date().toISOString();
-  const { error } = await supabase
-    .from("user_stamps")
-    .update({ is_collect_reward: true, updated_at: claimedAt })
-    .eq("hashed_user_id", studentId);
+  const { data: result, error } = await supabase
+    .rpc("redeem_reward", { p_hashed_user_id: studentId })
+    .single<string>();
   if (error) fail("บันทึกการรับรางวัลไม่สำเร็จ", error);
-  const { error: logError } = await supabase.from("activity_log").insert({
-    hashed_user_id: studentId,
-    action_type: "redeem_reward",
-    booth_id: null,
-  });
-  if (logError) fail("บันทึกกิจกรรมไม่สำเร็จ", logError);
+  if (result === "already_claimed") {
+    return { claim: { id: `reward:${studentId}`, studentId, claimedAt }, created: false };
+  }
+  if (result === "not_eligible") {
+    throw new Error("ยังสะสมแสตมป์ไม่ครบเงื่อนไข (ต้องการอย่างน้อย 5 บูธหน้า + 5 บูธหลัง)");
+  }
   return {
     claim: { id: `reward:${studentId}`, studentId, claimedAt },
     created: true,
