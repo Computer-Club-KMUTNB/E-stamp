@@ -68,13 +68,10 @@ export default function RewardScannerPage({ params }: { params: { token: string 
   if (clubs.length === 0) return <div className="mx-auto mt-16 max-w-xl card text-center"><p className="text-6xl">⚙️</p><h1 className="mt-5 text-3xl font-black">ยังไม่มีบูธในสถานที่นี้</h1><p className="mt-3 text-slate-600">กรุณาเพิ่มข้อมูลบูธก่อนเปิดจุดตรวจรับรางวัล</p></div>;
   
   return <div className="mx-auto max-w-4xl py-4 sm:py-8">
-    <header className="mb-5 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-      <div>
-        <p className="font-bold text-brand">จุดตรวจรับรางวัล</p>
-        <h1 className="mt-1 text-3xl font-black sm:text-5xl">ตรวจสิทธิ์รับรางวัล</h1>
-        <p className="mt-2 text-slate-600">ต้องเข้าร่วม {locationNames.front} อย่างน้อย 5 ชมรม และ {locationNames.back} อย่างน้อย 5 ชมรม รวมอย่างน้อย 10 ชมรม</p>
-      </div>
-      <button onClick={logout} className="secondary !min-h-10 shrink-0 !px-4 !text-sm">ออกจากระบบ</button>
+    <header className="mb-5 text-center sm:text-left">
+      <p className="font-bold text-brand">จุดตรวจรับรางวัล</p>
+      <h1 className="mt-1 text-3xl font-black sm:text-5xl">ตรวจสิทธิ์รับรางวัล</h1>
+      <p className="mt-2 text-slate-600">ต้องเข้าร่วม {locationNames.front} อย่างน้อย 5 ชมรม และ {locationNames.back} อย่างน้อย 5 ชมรม รวมอย่างน้อย 10 ชมรม</p>
     </header>
     <section className="card">
       <div className={status ? "hidden" : ""}><Scanner ref={scannerRef} onScan={onScan} resetKey={0} /></div>
@@ -83,5 +80,10 @@ export default function RewardScannerPage({ params }: { params: { token: string 
         <button className="primary w-full" onClick={() => { setStatus(null); void scannerRef.current?.start(); }}>สแกนคนถัดไป</button>
       </div>}
     </section>
+    <div className="mt-12 text-center">
+      <button onClick={logout} className="text-sm font-medium text-slate-400 hover:text-slate-600 underline underline-offset-4">
+        ออกจากระบบ
+      </button>
+    </div>
   </div>;
 }

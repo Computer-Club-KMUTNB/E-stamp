@@ -65,13 +65,17 @@ async function hashStudentCode(studentCode: string): Promise<string> {
 
 export async function getStudentByToken(qrToken: string): Promise<Student | null> {
   if (!/^[a-f0-9]{64}$/i.test(qrToken)) return null;
-  const { data, error } = await supabase
-    .from("user_info")
-    .select("hashed_user_id, student_id, name, faculty, created_at")
-    .eq("hashed_user_id", qrToken.toLowerCase())
-    .maybeSingle<UserInfoRow>();
+  const { data, error } = await supabase.rpc("get_student_by_token", { p_token: qrToken.toLowerCase() }).maybeSingle();
   if (error) fail("ค้นหาผู้เข้าร่วมไม่สำเร็จ", error);
-  return data ? toStudent(data) : null;
+  if (!data) return null;
+  return {
+    id: data.hashed_user_id,
+    studentCode: data.student_id,
+    name: data.name,
+    faculty: data.faculty,
+    qrToken: data.hashed_user_id,
+    createdAt: data.created_at,
+  };
 }
 
 export async function createStudent(studentCode: string, name: string, faculty: string): Promise<Student> {
@@ -151,45 +155,21 @@ export async function getAllClubs(): Promise<Club[]> {
   })));
 }
 
-async function getStampRow(studentId: string): Promise<UserStampsRow | null> {
-  const { data, error } = await supabase
-    .from("user_stamps")
-    .select("hashed_user_id, front_booths_visited, back_booths_visited, is_collect_reward, updated_at")
-    .eq("hashed_user_id", studentId)
-    .maybeSingle<UserStampsRow>();
-  if (error) fail("โหลดแสตมป์ไม่สำเร็จ", error);
-  return data;
-}
+
 
 export async function recordStamp(studentId: string, clubId: string): Promise<{ stamp: Stamp; created: boolean }> {
-  const club = await getClubByToken(clubId);
-  if (!club) fail("ไม่พบบูธ", null);
-  const row = await getStampRow(studentId);
-  if (!row) fail("ไม่พบสมุดสะสมแสตมป์", null);
-
-  const column = club.location === "front" ? "front_booths_visited" : "back_booths_visited";
-  const visited = row[column];
-  const stamp: Stamp = { id: `${studentId}:${clubId}`, studentId, clubId, scannedAt: row.updated_at };
-  if (visited.includes(clubId)) return { stamp, created: false };
-
-  const scannedAt = new Date().toISOString();
-  const { error } = await supabase
-    .from("user_stamps")
-    .update({ [column]: [...visited, clubId], updated_at: scannedAt })
-    .eq("hashed_user_id", studentId);
+  const { data, error } = await supabase.rpc("record_stamp", { p_token: studentId, p_booth_id: clubId }).single();
   if (error) fail("บันทึกแสตมป์ไม่สำเร็จ", error);
-
-  const { error: logError } = await supabase.from("activity_log").insert({
-    hashed_user_id: studentId,
-    action_type: "check_in",
-    booth_id: clubId,
-  });
-  if (logError) fail("บันทึกกิจกรรมไม่สำเร็จ", logError);
-  return { stamp: { ...stamp, scannedAt }, created: true };
+  
+  return {
+    stamp: { id: `${studentId}:${clubId}`, studentId, clubId, scannedAt: data.scanned_at },
+    created: data.created,
+  };
 }
 
 export async function getStampsForStudent(studentId: string): Promise<Stamp[]> {
-  const row = await getStampRow(studentId);
+  const { data: row, error } = await supabase.rpc("get_stamps_for_student", { p_token: studentId }).maybeSingle();
+  if (error) fail("โหลดแสตมป์ไม่สำเร็จ", error);
   if (!row) return [];
   return [...row.front_booths_visited, ...row.back_booths_visited].map((clubId) => ({
     id: `${studentId}:${clubId}`,
@@ -204,7 +184,8 @@ export async function getRewardBoothByToken(token: string): Promise<RewardBooth 
 }
 
 export async function getRewardClaim(studentId: string): Promise<RewardClaim | null> {
-  const row = await getStampRow(studentId);
+  const { data: row, error } = await supabase.rpc("get_stamps_for_student", { p_token: studentId }).maybeSingle();
+  if (error) fail("ตรวจสอบรางวัลไม่สำเร็จ", error);
   if (!row) return null;
   return row.is_collect_reward
     ? { id: `reward:${studentId}`, studentId, claimedAt: row.updated_at }
