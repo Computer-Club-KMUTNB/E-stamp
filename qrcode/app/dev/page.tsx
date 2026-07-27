@@ -33,8 +33,8 @@ export default function DevPage() {
   const filteredClubs = useMemo(() => {
     if (!normalizedQuery) return clubs;
     return clubs.filter((club) => {
-      const name = club.name.toLowerCase();
-      const boothNumber = club.boothNumber.toLowerCase();
+      const name = (club.name || "").toLowerCase();
+      const boothNumber = (club.boothNumber || "").toLowerCase();
       return name.includes(normalizedQuery) || boothNumber.includes(normalizedQuery);
     });
   }, [clubs, normalizedQuery]);
