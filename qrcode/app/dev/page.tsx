@@ -1,10 +1,10 @@
 "use client";
-
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { getAllClubs } from "@/lib/dataClient";
-import { adminLogout, isAdminLoggedIn } from "@/lib/adminSession";
+import { adminLogout, getAdminCredentials } from "@/lib/adminSession";
 import { locationNames } from "@/lib/mockData";
+import { supabase } from "@/lib/supabase";
 import type { Club, Zone } from "@/lib/types";
 
 const zones: Zone[] = ["front", "back"];
@@ -17,14 +17,26 @@ export default function DevPage() {
   const [authed, setAuthed] = useState(false);
 
   useEffect(() => {
-    if (!isAdminLoggedIn()) {
+    const creds = getAdminCredentials();
+    if (!creds || !creds.email || !creds.pass) {
+      adminLogout();
       window.location.replace("/admin-login?next=/dev");
       return;
     }
-    setAuthed(true);
-    getAllClubs().then(setClubs).catch((caught) => {
-      setError(caught instanceof Error ? caught.message : "โหลดรายการบูธไม่สำเร็จ");
-    }).finally(() => setLoading(false));
+
+    supabase.rpc("login_admin", { p_email: creds.email, p_password: creds.pass })
+      .single<boolean>()
+      .then(({ data, error }) => {
+        if (error || !data) {
+          adminLogout();
+          window.location.replace("/admin-login?next=/dev");
+          return;
+        }
+        setAuthed(true);
+        getAllClubs().then(setClubs).catch((caught) => {
+          setError(caught instanceof Error ? caught.message : "โหลดรายการบูธไม่สำเร็จ");
+        }).finally(() => setLoading(false));
+      });
   }, []);
 
   const normalizedQuery = query.trim().toLowerCase();

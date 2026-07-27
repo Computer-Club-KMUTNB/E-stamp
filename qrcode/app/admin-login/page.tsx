@@ -21,7 +21,7 @@ export default function AdminLoginPage() {
         setError("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
         return;
       }
-      adminLogin(email.trim());
+      adminLogin(email.trim(), password);
       const requested = new URLSearchParams(window.location.search).get("next") ?? "/dev";
       const destination = requested.startsWith("/") && !requested.startsWith("//") ? requested : "/dev";
       window.location.replace(destination);

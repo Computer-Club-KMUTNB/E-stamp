@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Activity, CheckCircle2, Gift, MapPin, Moon, Sun, TrendingUp, Users } from "lucide-react";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { supabase } from "@/lib/supabase";
-import { adminLogout, isAdminLoggedIn } from "@/lib/adminSession";
+import { adminLogout, getAdminCredentials } from "@/lib/adminSession";
 
 interface ActivityItem { id: string | number; user: string; action: string; target: string; time: string }
 interface BoothItem { name: string; visits: number }
@@ -35,12 +35,23 @@ export default function DashboardPage() {
   const [recentActivityData, setRecentActivityData] = useState<ActivityItem[]>([]);
 
   useEffect(() => {
-    if (!isAdminLoggedIn()) {
+    const creds = getAdminCredentials();
+    if (!creds || !creds.email || !creds.pass) {
       adminLogout(); // clear any stale session
       window.location.replace("/admin-login?next=/dashboard");
       return;
     }
-    setAuthed(true);
+
+    supabase.rpc("login_admin", { p_email: creds.email, p_password: creds.pass })
+      .single<boolean>()
+      .then(({ data, error }) => {
+        if (error || !data) {
+          adminLogout();
+          window.location.replace("/admin-login?next=/dashboard");
+          return;
+        }
+        setAuthed(true);
+      });
   }, []);
 
   useEffect(() => {

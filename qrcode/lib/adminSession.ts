@@ -6,8 +6,18 @@ export function isAdminLoggedIn(): boolean {
   return !!window.sessionStorage.getItem(ADMIN_SESSION_KEY);
 }
 
-export function adminLogin(email: string): void {
-  window.sessionStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify({ email, loginAt: Date.now() }));
+export function getAdminCredentials(): { email: string; pass: string } | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const data = window.sessionStorage.getItem(ADMIN_SESSION_KEY);
+    return data ? JSON.parse(data) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function adminLogin(email: string, pass: string): void {
+  window.sessionStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify({ email, pass, loginAt: Date.now() }));
 }
 
 export function adminLogout(): void {
