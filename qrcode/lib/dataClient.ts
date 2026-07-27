@@ -65,7 +65,7 @@ async function hashStudentCode(studentCode: string): Promise<string> {
 
 export async function getStudentByToken(qrToken: string): Promise<Student | null> {
   if (!/^[a-f0-9]{64}$/i.test(qrToken)) return null;
-  const { data, error } = await supabase.rpc("get_student_by_token", { p_token: qrToken.toLowerCase() }).maybeSingle();
+  const { data, error } = await supabase.rpc("get_student_by_token", { p_token: qrToken.toLowerCase() }).maybeSingle<{ hashed_user_id: string; student_id: string; name: string; faculty: string; created_at: string }>();
   if (error) fail("ค้นหาผู้เข้าร่วมไม่สำเร็จ", error);
   if (!data) return null;
   return {
@@ -158,7 +158,7 @@ export async function getAllClubs(): Promise<Club[]> {
 
 
 export async function recordStamp(studentId: string, clubId: string): Promise<{ stamp: Stamp; created: boolean }> {
-  const { data, error } = await supabase.rpc("record_stamp", { p_token: studentId, p_booth_id: clubId }).single();
+  const { data, error } = await supabase.rpc("record_stamp", { p_token: studentId, p_booth_id: clubId }).single<any>();
   if (error) fail("บันทึกแสตมป์ไม่สำเร็จ", error);
   
   return {
@@ -168,7 +168,7 @@ export async function recordStamp(studentId: string, clubId: string): Promise<{ 
 }
 
 export async function getStampsForStudent(studentId: string): Promise<Stamp[]> {
-  const { data: row, error } = await supabase.rpc("get_stamps_for_student", { p_token: studentId }).maybeSingle();
+  const { data: row, error } = await supabase.rpc("get_stamps_for_student", { p_token: studentId }).maybeSingle<{ front_booths_visited: string[]; back_booths_visited: string[]; updated_at: string }>();
   if (error) fail("โหลดแสตมป์ไม่สำเร็จ", error);
   if (!row) return [];
   return [...row.front_booths_visited, ...row.back_booths_visited].map((clubId) => ({
@@ -184,7 +184,7 @@ export async function getRewardBoothByToken(token: string): Promise<RewardBooth 
 }
 
 export async function getRewardClaim(studentId: string): Promise<RewardClaim | null> {
-  const { data: row, error } = await supabase.rpc("get_stamps_for_student", { p_token: studentId }).maybeSingle();
+  const { data: row, error } = await supabase.rpc("get_stamps_for_student", { p_token: studentId }).maybeSingle<{ is_collect_reward: boolean; updated_at: string }>();
   if (error) fail("ตรวจสอบรางวัลไม่สำเร็จ", error);
   if (!row) return null;
   return row.is_collect_reward
