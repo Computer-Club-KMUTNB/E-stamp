@@ -19,23 +19,41 @@ export async function middleware(request: NextRequest) {
   );
 
   const { data: { user } } = await supabase.auth.getUser();
-  if (request.nextUrl.pathname === "/staff-login") {
+
+  // /admin-login: redirect to /dev if already logged in
+  if (request.nextUrl.pathname === "/admin-login") {
     if (user) {
-      const staffUrl = request.nextUrl.clone();
-      staffUrl.pathname = "/dev";
-      staffUrl.search = "";
-      return NextResponse.redirect(staffUrl);
+      const dest = request.nextUrl.clone();
+      dest.pathname = "/dev";
+      dest.search = "";
+      return NextResponse.redirect(dest);
     }
     return response;
   }
 
+  // Legacy /staff-login: also redirect to /dev if logged in as admin
+  if (request.nextUrl.pathname === "/staff-login") {
+    if (user) {
+      const dest = request.nextUrl.clone();
+      dest.pathname = "/dev";
+      dest.search = "";
+      return NextResponse.redirect(dest);
+    }
+    return response;
+  }
+
+  // Admin-only routes: require Supabase Auth session
   if (!user) {
     const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = "/staff-login";
+    loginUrl.pathname = "/admin-login";
     loginUrl.searchParams.set("next", `${request.nextUrl.pathname}${request.nextUrl.search}`);
     return NextResponse.redirect(loginUrl);
   }
+
   return response;
 }
 
-export const config = { matcher: ["/staff-login", "/dev/:path*", "/dashboard/:path*", "/club/:path*", "/reward/:path*"] };
+// /scan/* is intentionally NOT here — it uses PIN session only (sessionStorage)
+export const config = {
+  matcher: ["/admin-login", "/staff-login", "/dev/:path*", "/dashboard/:path*", "/club/:path*", "/reward/:path*"],
+};
