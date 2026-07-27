@@ -54,7 +54,11 @@ export default function StaffLoginPage() {
       }
       // Store PIN session in sessionStorage
       window.sessionStorage.setItem("staff_pin_booth", data);
-      window.location.replace(`/scan/${encodeURIComponent(data)}`);
+      if (data === "reward") {
+        window.location.replace(`/reward/reward`);
+      } else {
+        window.location.replace(`/scan/${encodeURIComponent(data)}`);
+      }
     } catch {
       setError("เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");
     } finally {
