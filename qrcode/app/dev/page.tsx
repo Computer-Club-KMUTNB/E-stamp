@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { getAllClubs } from "@/lib/dataClient";
+import { adminLogout, isAdminLoggedIn } from "@/lib/adminSession";
 import { locationNames } from "@/lib/mockData";
 import type { Club, Zone } from "@/lib/types";
 
@@ -13,12 +14,20 @@ export default function DevPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
+  const [authed, setAuthed] = useState(false);
 
   useEffect(() => {
+    if (!isAdminLoggedIn()) {
+      window.location.replace("/admin-login?next=/dev");
+      return;
+    }
+    setAuthed(true);
     getAllClubs().then(setClubs).catch((caught) => {
       setError(caught instanceof Error ? caught.message : "โหลดรายการบูธไม่สำเร็จ");
     }).finally(() => setLoading(false));
   }, []);
+
+  if (!authed) return null;
 
   const normalizedQuery = query.trim().toLowerCase();
   const filteredClubs = useMemo(() => {
@@ -32,7 +41,10 @@ export default function DevPage() {
 
   return <div className="py-8 sm:py-12">
     <header className="border-b pb-8" style={{borderColor:"var(--line)"}}>
-      <p className="eyebrow">STAFF CONSOLE</p>
+      <div className="flex items-center justify-between gap-4">
+        <p className="eyebrow">STAFF CONSOLE</p>
+        <button onClick={() => { adminLogout(); window.location.replace("/admin-login"); }} className="secondary !min-h-10 !px-4 !text-sm">ออกจากระบบ</button>
+      </div>
       <h1 className="mt-2 text-4xl font-black tracking-tight sm:text-5xl">เลือกจุดปฏิบัติงาน</h1>
       <p className="mt-3 max-w-2xl leading-7 text-slate-600">เลือกบูธเพื่อเปิดกล้องสแกน หรือเปิดตรวจรับรางวัล ข้อมูลทุกครั้งจะส่งไปยัง Dashboard อัตโนมัติ</p>
       {!loading && clubs.length > 0 && (
