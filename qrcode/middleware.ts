@@ -20,19 +20,8 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  // /admin-login: redirect to /dev if already logged in
+  // /admin-login: redirect to /dev if already logged in as admin
   if (request.nextUrl.pathname === "/admin-login") {
-    if (user) {
-      const dest = request.nextUrl.clone();
-      dest.pathname = "/dev";
-      dest.search = "";
-      return NextResponse.redirect(dest);
-    }
-    return response;
-  }
-
-  // Legacy /staff-login: also redirect to /dev if logged in as admin
-  if (request.nextUrl.pathname === "/staff-login") {
     if (user) {
       const dest = request.nextUrl.clone();
       dest.pathname = "/dev";
@@ -53,7 +42,7 @@ export async function middleware(request: NextRequest) {
   return response;
 }
 
-// /scan/* is intentionally NOT here — it uses PIN session only (sessionStorage)
+// /staff-login and /scan/* are public PIN-based routes — no Supabase Auth needed
 export const config = {
-  matcher: ["/admin-login", "/staff-login", "/dev/:path*", "/dashboard/:path*", "/club/:path*", "/reward/:path*"],
+  matcher: ["/admin-login", "/dev/:path*", "/dashboard/:path*", "/club/:path*", "/reward/:path*"],
 };
