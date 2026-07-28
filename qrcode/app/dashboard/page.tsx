@@ -131,7 +131,6 @@ export default function DashboardPage() {
       <div><p className="dashboard-eyebrow">KMUTNB OPEN WORLD</p><h1 className="dashboard-title">Event Dashboard</h1><p className="dashboard-subtitle">ภาพรวมการเข้าร่วมกิจกรรมแบบเรียลไทม์</p></div>
       <div className="dashboard-actions">
         <button aria-label="สลับโหมดสี" onClick={() => setIsDarkMode((value) => !value)} className="dashboard-glass dashboard-theme-button">{isDarkMode ? <Sun size={20}/> : <Moon size={20}/>}</button>
-        <button onClick={() => { void supabase.auth.signOut().then(() => window.location.replace("/admin-login?next=/dashboard")); }} className="dashboard-glass dashboard-theme-button" aria-label="ออกจากระบบ" title="ออกจากระบบ">⏻</button>
         <div className="dashboard-status dashboard-glass"><i/><span>System Live</span></div>
       </div>
     </header>
