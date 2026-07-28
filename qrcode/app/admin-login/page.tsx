@@ -15,6 +15,19 @@ export default function AdminLoginPage({ searchParams }: { searchParams?: { next
     event.preventDefault();
     setLoading(true); setError("");
     try {
+      if (isDashboardLogin) {
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        });
+        if (signInError) {
+          setError("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+          return;
+        }
+        window.location.replace("/dashboard");
+        return;
+      }
+
       const { data: ok, error: rpcError } = await supabase
         .rpc("login_admin", { p_email: email.trim(), p_password: password })
         .single<boolean>();

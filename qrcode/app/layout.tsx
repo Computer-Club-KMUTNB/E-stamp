@@ -3,7 +3,11 @@ import { AuthNav } from "@/components/AuthNav";
 import { SiteBrand } from "@/components/SiteBrand";
 import "./globals.css";
 
-export const metadata: Metadata = { title: "OPENWORLD KMUTNB", description: "ระบบสะสมแสตมป์ด้วย QR Code สำหรับงาน OPENWORLD KMUTNB" };
+export const metadata: Metadata = {
+  title: "OPENWORLD KMUTNB",
+  description: "ระบบสะสมแสตมป์ด้วย QR Code สำหรับงาน OPENWORLD KMUTNB",
+  icons: { icon: "/site-logo.png" },
+};
 export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover", themeColor: "#f6f2ea" };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

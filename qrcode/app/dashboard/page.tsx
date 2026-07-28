@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from "react";
 import { Activity, CheckCircle2, Gift, MapPin, Moon, Sun, TrendingUp, Users } from "lucide-react";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { supabase } from "@/lib/supabase";
-import { adminLogout, getAdminCredentials } from "@/lib/adminSession";
 
 interface ActivityItem { id: string | number; user: string; action: string; target: string; time: string }
 interface BoothItem { name: string; visits: number }
@@ -35,23 +34,25 @@ export default function DashboardPage() {
   const [recentActivityData, setRecentActivityData] = useState<ActivityItem[]>([]);
 
   useEffect(() => {
-    const creds = getAdminCredentials();
-    if (!creds || !creds.email || !creds.pass) {
-      adminLogout(); // clear any stale session
-      window.location.replace("/admin-login?next=/dashboard");
-      return;
-    }
-
-    supabase.rpc("login_admin", { p_email: creds.email, p_password: creds.pass })
-      .single<boolean>()
-      .then(({ data, error }) => {
-        if (error || !data) {
-          adminLogout();
-          window.location.replace("/admin-login?next=/dashboard");
-          return;
-        }
-        setAuthed(true);
-      });
+    let active = true;
+    void supabase.auth.getSession().then(({ data }) => {
+      if (!active) return;
+      if (!data.session) {
+        window.location.replace("/admin-login?next=/dashboard");
+        return;
+      }
+      setAuthed(true);
+    });
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+        setAuthed(false);
+        window.location.replace("/admin-login?next=/dashboard");
+      }
+    });
+    return () => {
+      active = false;
+      authListener.subscription.unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
@@ -130,7 +131,7 @@ export default function DashboardPage() {
       <div><p className="dashboard-eyebrow">KMUTNB OPEN WORLD</p><h1 className="dashboard-title">Event Dashboard</h1><p className="dashboard-subtitle">ภาพรวมการเข้าร่วมกิจกรรมแบบเรียลไทม์</p></div>
       <div className="dashboard-actions">
         <button aria-label="สลับโหมดสี" onClick={() => setIsDarkMode((value) => !value)} className="dashboard-glass dashboard-theme-button">{isDarkMode ? <Sun size={20}/> : <Moon size={20}/>}</button>
-        <button onClick={() => { adminLogout(); window.location.replace("/admin-login"); }} className="dashboard-glass dashboard-theme-button" aria-label="ออกจากระบบ" title="ออกจากระบบ">⏻</button>
+        <button onClick={() => { void supabase.auth.signOut().then(() => window.location.replace("/admin-login?next=/dashboard")); }} className="dashboard-glass dashboard-theme-button" aria-label="ออกจากระบบ" title="ออกจากระบบ">⏻</button>
         <div className="dashboard-status dashboard-glass"><i/><span>System Live</span></div>
       </div>
     </header>
