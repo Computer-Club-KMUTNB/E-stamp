@@ -46,6 +46,38 @@ function fail(message: string, error: { message: string } | null): never {
   throw new Error(error ? `${message}: ${error.message}` : message);
 }
 
+async function notifyParticipantProgressChanged(hashedUserId: string): Promise<void> {
+  const channel = supabase.channel(`participant:${hashedUserId}`, {
+    config: { private: false },
+  });
+
+  await new Promise<void>((resolve) => {
+    let finished = false;
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      window.clearTimeout(timeout);
+      void supabase.removeChannel(channel);
+      resolve();
+    };
+    const timeout = window.setTimeout(finish, 5_000);
+
+    channel.subscribe((status) => {
+      if (status === "SUBSCRIBED") {
+        void channel
+          .send({
+            type: "broadcast",
+            event: "progress_changed",
+            payload: { updatedAt: new Date().toISOString() },
+          })
+          .finally(finish);
+      } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+        finish();
+      }
+    });
+  });
+}
+
 function toStudent(row: UserInfoRow): Student {
   return {
     id: row.hashed_user_id,
@@ -160,6 +192,11 @@ export async function getAllClubs(): Promise<Club[]> {
 export async function recordStamp(studentId: string, clubId: string): Promise<{ stamp: Stamp; created: boolean }> {
   const { data, error } = await supabase.rpc("record_stamp", { p_token: studentId, p_booth_id: clubId }).single<any>();
   if (error) fail("บันทึกแสตมป์ไม่สำเร็จ", error);
+  if (data.created) {
+    void notifyParticipantProgressChanged(studentId).catch((caught) => {
+      console.error("Participant progress notification failed:", caught);
+    });
+  }
   
   return {
     stamp: { id: `${studentId}:${clubId}`, studentId, clubId, scannedAt: data.scanned_at },
@@ -204,6 +241,9 @@ export async function createRewardClaim(studentId: string): Promise<{ claim: Rew
   if (result === "not_eligible") {
     throw new Error("ยังสะสมแสตมป์ไม่ครบเงื่อนไข (ต้องการอย่างน้อย 5 บูธหน้า + 5 บูธหลัง)");
   }
+  void notifyParticipantProgressChanged(studentId).catch((caught) => {
+    console.error("Participant progress notification failed:", caught);
+  });
   return {
     claim: { id: `reward:${studentId}`, studentId, claimedAt },
     created: true,
