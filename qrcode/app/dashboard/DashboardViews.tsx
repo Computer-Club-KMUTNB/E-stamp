@@ -53,7 +53,8 @@ export function BoothChart({ title, data, least = false }: { title:string; data:
     {data.length ? <div className="dashboard-booth-chart"><ResponsiveContainer width="100%" height="100%">
       <BarChart data={data} layout="vertical" margin={{ right:12 }}>
         <XAxis type="number" allowDecimals={false} hide/>
-        <YAxis dataKey="name" type="category" width={110} stroke="var(--dashboard-muted)" fontSize={12} tickLine={false} axisLine={false}/>
+        {/* ชื่อบูธภาษาไทยยาวเกินความกว้างแกน Y จึงตัดด้วย … แล้วให้ tooltip แสดงชื่อเต็ม */}
+        <YAxis dataKey="name" type="category" width={124} stroke="var(--dashboard-muted)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(name: string) => (name.length > 17 ? `${name.slice(0, 16)}…` : name)}/>
         <Tooltip cursor={{ fill:"rgba(172,53,32,.05)" }} contentStyle={tooltipStyle}/>
         <Bar dataKey="visits" fill={least ? "#d97706" : "var(--dashboard-brand)"} radius={[0,4,4,0]}/>
       </BarChart>

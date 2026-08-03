@@ -15,11 +15,26 @@ import {
 import type { ZoneFilter } from "./dashboard-types";
 import { useDashboardData } from "./useDashboardData";
 
+const THEME_KEY = "dashboard_theme";
+
 export default function DashboardPage() {
   const [zone, setZone] = useState<ZoneFilter>("all");
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [authed, setAuthed] = useState(false);
+  const [isOnline, setIsOnline] = useState(true);
   const { stampRows, boothRows, logs, isLoading, error, refresh } = useDashboardData(authed);
+
+  useEffect(() => {
+    setIsDarkMode(window.localStorage.getItem(THEME_KEY) === "dark");
+    const sync = () => setIsOnline(navigator.onLine);
+    sync();
+    window.addEventListener("online", sync);
+    window.addEventListener("offline", sync);
+    return () => {
+      window.removeEventListener("online", sync);
+      window.removeEventListener("offline", sync);
+    };
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -42,6 +57,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     document.documentElement.classList.toggle("dashboard-dark", isDarkMode);
+    window.localStorage.setItem(THEME_KEY, isDarkMode ? "dark" : "light");
     return () => document.documentElement.classList.remove("dashboard-dark");
   }, [isDarkMode]);
 
@@ -68,7 +84,11 @@ export default function DashboardPage() {
   const frontFunnel = useMemo(() => buildFunnel(stampRows, "front", frontTotal), [stampRows, frontTotal]);
   const backFunnel = useMemo(() => buildFunnel(stampRows, "back", backTotal), [stampRows, backTotal]);
 
-  if (!authed) return null;
+  if (!authed) return <div className="dashboard-container" aria-busy="true">
+    <div className="dashboard-skeleton-header"><span/><span/></div>
+    <div className="dashboard-metrics">{[1, 2, 3].map((n) => <div key={n} className="dashboard-skeleton-block dashboard-glass"/>)}</div>
+    <p className="dashboard-empty">กำลังตรวจสอบสิทธิ์เข้าใช้งาน…</p>
+  </div>;
   const top = popular[0];
 
   return <div className="dashboard-container">
@@ -82,10 +102,10 @@ export default function DashboardPage() {
         <button type="button" onClick={() => exportActivityCsv(logs)} disabled={!logs.length} className="dashboard-glass dashboard-export-button">
           <Download size={18}/><span>ส่งออก CSV</span>
         </button>
-        <button type="button" aria-label="สลับโหมดสี" onClick={() => setIsDarkMode((value) => !value)} className="dashboard-glass dashboard-theme-button">
+        <button type="button" aria-label={isDarkMode ? "เปลี่ยนเป็นโหมดสว่าง" : "เปลี่ยนเป็นโหมดมืด"} aria-pressed={isDarkMode} onClick={() => setIsDarkMode((value) => !value)} className="dashboard-glass dashboard-theme-button">
           {isDarkMode ? <Sun size={20}/> : <Moon size={20}/>}
         </button>
-        <div className="dashboard-status dashboard-glass"><i/><span>ระบบออนไลน์</span></div>
+        <div className={isOnline ? "dashboard-status dashboard-glass" : "dashboard-status dashboard-glass offline"} role="status"><i/><span>{isOnline ? "ระบบออนไลน์" : "ออฟไลน์"}</span></div>
       </div>
     </header>
 
@@ -99,9 +119,9 @@ export default function DashboardPage() {
     </div>
 
     <div className="dashboard-metrics">
-      <Metric title="ผู้เข้าร่วมทั้งหมด" value={isLoading ? "..." : total.toLocaleString()} detail="อัปเดตแบบเรียลไทม์" icon={<Users size={20}/>}/>
-      <Metric title="บูธยอดนิยม" value={isLoading ? "..." : top?.visits ? top.name : "ยังไม่มีข้อมูล"} detail={top?.visits ? `${top.visits.toLocaleString()} ครั้ง` : "รอการเช็กอิน"} icon={<MapPin size={20}/>} textValue/>
-      <Metric title="รับรางวัลแล้ว" value={isLoading ? "..." : `${rewards.toLocaleString()} คน`} detail={total ? `${percentage(rewards, total)} ของผู้เข้าร่วมทั้งหมด` : "ยังไม่มีผู้เข้าร่วม"} icon={<Gift size={20}/>}/>
+      <Metric title="ผู้เข้าร่วมทั้งหมด" value={isLoading ? "…" : total.toLocaleString()} detail="อัปเดตแบบเรียลไทม์" icon={<Users size={20}/>}/>
+      <Metric title="บูธยอดนิยม" value={isLoading ? "…" : top?.visits ? top.name : "ยังไม่มีข้อมูล"} detail={top?.visits ? `${top.visits.toLocaleString()} ครั้ง` : "รอการเช็กอิน"} icon={<MapPin size={20}/>} textValue/>
+      <Metric title="รับรางวัลแล้ว" value={isLoading ? "…" : `${rewards.toLocaleString()} คน`} detail={total ? `${percentage(rewards, total)} ของผู้เข้าร่วมทั้งหมด` : "ยังไม่มีผู้เข้าร่วม"} icon={<Gift size={20}/>}/>
     </div>
 
     <div className="dashboard-content-grid">

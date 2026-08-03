@@ -9,6 +9,7 @@ export default function AdminLoginPage({ searchParams }: { searchParams?: { next
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const isDashboardLogin = searchParams?.next === "/dashboard";
 
   async function submit(event: FormEvent) {
@@ -54,12 +55,15 @@ export default function AdminLoginPage({ searchParams }: { searchParams?: { next
       <p className="mt-2 text-sm leading-6 text-slate-600">{isDashboardLogin ? "เข้าสู่ระบบเพื่อดูภาพรวมและติดตามการเข้าร่วมกิจกรรมแบบเรียลไทม์" : "เฉพาะผู้ดูแลระบบที่ได้รับบัญชีจากผู้จัดงานเท่านั้น"}</p>
       <form className="mt-7 space-y-4" onSubmit={submit}>
         <div>
-          <label className="font-bold" htmlFor="email">อีเมล</label>
-          <input className="field" id="email" type="email" autoComplete="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="admin@example.com" />
+          <label className="block font-bold" htmlFor="email">อีเมล</label>
+          <input className="field" id="email" type="email" inputMode="email" autoComplete="email" required aria-invalid={error ? true : undefined} value={email} onChange={e => { setEmail(e.target.value); if (error) setError(""); }} placeholder="admin@example.com" />
         </div>
         <div>
-          <label className="font-bold" htmlFor="password">รหัสผ่าน</label>
-          <input className="field" id="password" type="password" autoComplete="current-password" required value={password} onChange={e => setPassword(e.target.value)} />
+          <label className="block font-bold" htmlFor="password">รหัสผ่าน</label>
+          <div className="relative mt-2">
+            <input className="field !mt-0 pr-20" id="password" type={showPassword ? "text" : "password"} autoComplete="current-password" required aria-invalid={error ? true : undefined} value={password} onChange={e => { setPassword(e.target.value); if (error) setError(""); }} />
+            <button type="button" onClick={() => setShowPassword(v => !v)} aria-pressed={showPassword} className="absolute right-2 top-1/2 -translate-y-1/2 rounded-xl px-3 py-2 text-sm font-bold text-slate-600 hover:bg-slate-100">{showPassword ? "ซ่อน" : "แสดง"}</button>
+          </div>
         </div>
         {error && <p role="alert" className="rounded-2xl border border-red-200 bg-red-50 p-3 font-bold text-red-800">{error}</p>}
         <button className="primary w-full" disabled={loading}>{loading ? (isDashboardLogin ? "กำลังเข้าสู่ Dashboard…" : "กำลังตรวจสอบ…") : (isDashboardLogin ? "เข้าสู่ Dashboard" : "เข้าสู่ระบบ")}</button>
