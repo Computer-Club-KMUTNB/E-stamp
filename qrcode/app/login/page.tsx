@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { PARTICIPANT_SESSION_KEY, notifyParticipantSessionChange } from "@/components/AuthNav";
 import { QrImage } from "@/components/QrImage";
 import { getAllClubs, loginStudent } from "@/lib/dataClient";
 import { locationNames } from "@/lib/mockData";
+import { supabase } from "@/lib/supabase";
 import type { Club, Student, Zone } from "@/lib/types";
 
 const zones: Zone[] = ["front", "back"];
@@ -20,6 +21,9 @@ export default function ParticipantLoginPage() {
   const [showRewardConditions, setShowRewardConditions] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [progressConnection, setProgressConnection] = useState<"connecting" | "live" | "fallback" | "offline">("connecting");
+  const progressRefreshInFlight = useRef(false);
+  const progressRefreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     getAllClubs().then(setClubs).catch(() => setClubs([]));
@@ -36,6 +40,69 @@ export default function ParticipantLoginPage() {
       }
     }
   }, []);
+
+  const refreshParticipantProgress = useCallback(async (currentStudent: Student) => {
+    if (progressRefreshInFlight.current || !navigator.onLine) return;
+    progressRefreshInFlight.current = true;
+    try {
+      const result = await loginStudent(currentStudent.studentCode, currentStudent.name);
+      if (!result || result.student.id !== currentStudent.id) return;
+      setVisitedClubIds(result.visitedClubIds);
+      window.sessionStorage.setItem(PARTICIPANT_SESSION_KEY, JSON.stringify(result));
+    } catch (caught) {
+      console.error("Participant progress refresh failed:", caught);
+    } finally {
+      progressRefreshInFlight.current = false;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!student) return;
+    const currentStudent = student;
+    const scheduleRefresh = () => {
+      if (progressRefreshTimer.current) clearTimeout(progressRefreshTimer.current);
+      progressRefreshTimer.current = setTimeout(() => void refreshParticipantProgress(currentStudent), 250);
+    };
+    const handleOnline = () => {
+      setProgressConnection("connecting");
+      scheduleRefresh();
+    };
+    const handleOffline = () => setProgressConnection("offline");
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") scheduleRefresh();
+    };
+
+    const channel = supabase
+      .channel(`participant:${currentStudent.qrToken}`, {
+        config: { private: false, broadcast: { ack: true, self: false } },
+      })
+      .on("broadcast", { event: "progress_changed" }, scheduleRefresh)
+      .subscribe((status, subscribeError) => {
+        if (subscribeError) console.error("Participant realtime subscription failed:", subscribeError);
+        if (!navigator.onLine) setProgressConnection("offline");
+        else if (status === "SUBSCRIBED") {
+          setProgressConnection("live");
+          scheduleRefresh();
+        } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+          setProgressConnection("fallback");
+        }
+      });
+    const pollingTimer = window.setInterval(() => {
+      if (navigator.onLine && document.visibilityState === "visible") void refreshParticipantProgress(currentStudent);
+    }, 10_000);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      if (progressRefreshTimer.current) clearTimeout(progressRefreshTimer.current);
+      window.clearInterval(pollingTimer);
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+      document.removeEventListener("visibilitychange", handleVisibility);
+      void supabase.removeChannel(channel);
+    };
+  }, [refreshParticipantProgress, student]);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -63,7 +130,23 @@ export default function ParticipantLoginPage() {
     const rewardReady = zoneCounts.front >= 5 && zoneCounts.back >= 5 && visitedClubIds.length >= 10;
 
     return <div className="mx-auto max-w-5xl py-8 sm:py-14">
-      <div className="mb-8"><p className="eyebrow">PARTICIPANT LOGIN</p><h1 className="mt-2 text-4xl font-black tracking-tight sm:text-5xl">ยินดีต้อนรับ {student.name}</h1><p className="mt-3 text-slate-600">ดู QR และตรวจสอบความคืบหน้าของคุณได้ที่นี่</p></div>
+      <div className="mb-8">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="eyebrow">PARTICIPANT LOGIN</p>
+          <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-bold ${
+            progressConnection === "live"
+              ? "border-green-200 bg-green-50 text-green-700"
+              : progressConnection === "offline"
+                ? "border-red-200 bg-red-50 text-red-700"
+                : "border-amber-200 bg-amber-50 text-amber-800"
+          }`} role="status" aria-live="polite">
+            <i className={`h-2 w-2 rounded-full ${progressConnection === "live" ? "bg-green-600" : progressConnection === "offline" ? "bg-red-600" : "bg-amber-500"}`} />
+            {progressConnection === "live" ? "อัปเดตแบบเรียลไทม์" : progressConnection === "offline" ? "ออฟไลน์" : progressConnection === "fallback" ? "กำลังใช้การอัปเดตสำรอง" : "กำลังเชื่อมต่อ…"}
+          </span>
+        </div>
+        <h1 className="mt-2 text-4xl font-black tracking-tight sm:text-5xl">ยินดีต้อนรับ {student.name}</h1>
+        <p className="mt-3 text-slate-600">ดู QR และตรวจสอบความคืบหน้าของคุณได้ที่นี่</p>
+      </div>
       <div className="grid gap-6 lg:grid-cols-[.7fr_1.3fr]">
         <section className="card h-fit text-center"><h2 className="text-2xl font-black">QR ของคุณ</h2><p className="mt-1 font-mono text-slate-500">{"•".repeat(Math.max(student.studentCode.length - 4, 0)) + student.studentCode.slice(-4)}</p><div className="my-4"><QrImage value={student.qrToken} compact downloadName={`e-stamp-${student.studentCode}.png`} /></div><p className="text-sm leading-6 text-slate-600">บันทึกภาพนี้ไว้ใช้สะสมแสตมป์ที่ทุกบูธ</p></section>
         <section className="card"><div className="flex items-end justify-between gap-3"><div><p className="eyebrow">BOOTH PROGRESS</p><h2 className="mt-1 text-2xl font-black">ความคืบหน้าของคุณ</h2></div><span className="rounded-full bg-green-100 px-3 py-1 text-sm font-bold text-green-800">{visitedClubIds.length}/{clubs.length} แห่ง</span></div>

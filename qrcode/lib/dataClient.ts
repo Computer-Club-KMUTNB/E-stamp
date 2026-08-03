@@ -48,7 +48,7 @@ function fail(message: string, error: { message: string } | null): never {
 
 async function notifyParticipantProgressChanged(hashedUserId: string): Promise<void> {
   const channel = supabase.channel(`participant:${hashedUserId}`, {
-    config: { private: false },
+    config: { private: false, broadcast: { ack: true, self: false } },
   });
 
   await new Promise<void>((resolve) => {
