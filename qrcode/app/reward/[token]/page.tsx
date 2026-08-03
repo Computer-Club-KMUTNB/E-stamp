@@ -63,14 +63,14 @@ export default function RewardScannerPage({ params }: { params: { token: string 
     router.replace("/staff-login");
   }
 
-  if (booth === undefined) return <p className="py-20 text-center text-xl font-bold">กำลังโหลด…</p>;
+  if (booth === undefined) return <div className="mx-auto mt-20 h-52 max-w-xl animate-pulse rounded-3xl bg-white/70" aria-busy="true" aria-label="กำลังโหลด" />;
   if (booth === null) return <div className="mx-auto mt-16 max-w-xl card text-center"><p className="text-6xl">⛔</p><h1 className="mt-5 text-3xl font-black">ลิงก์จุดรับรางวัลไม่ถูกต้อง</h1></div>;
   if (clubs.length === 0) return <div className="mx-auto mt-16 max-w-xl card text-center"><p className="text-6xl">⚙️</p><h1 className="mt-5 text-3xl font-black">ยังไม่มีบูธในสถานที่นี้</h1><p className="mt-3 text-slate-600">กรุณาเพิ่มข้อมูลบูธก่อนเปิดจุดตรวจรับรางวัล</p></div>;
   
   return <div className="mx-auto max-w-4xl py-4 sm:py-8">
     <header className="mb-5 text-center sm:text-left">
-      <p className="font-bold text-brand">จุดตรวจรับรางวัล</p>
-      <h1 className="mt-1 text-3xl font-black sm:text-5xl">ตรวจสิทธิ์รับรางวัล</h1>
+      <p className="eyebrow">REWARD DESK</p>
+      <h1 className="mt-1 text-3xl font-black tracking-tight sm:text-5xl">ตรวจสิทธิ์รับรางวัล</h1>
       <p className="mt-2 text-slate-600">ต้องเข้าร่วม {locationNames.front} อย่างน้อย 5 ชมรม และ {locationNames.back} อย่างน้อย 5 ชมรม รวมอย่างน้อย 10 ชมรม</p>
     </header>
     <section className="card">

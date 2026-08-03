@@ -49,7 +49,13 @@ export default function DevPage() {
     });
   }, [clubs, normalizedQuery]);
 
-  if (!authed) return null;
+  if (!authed) return <div className="py-8 sm:py-12" aria-busy="true">
+    <div className="h-4 w-32 animate-pulse rounded-full bg-white/70" />
+    <div className="mt-4 h-10 w-3/4 max-w-md animate-pulse rounded-2xl bg-white/70" />
+    <div className="mt-3 h-4 w-full max-w-2xl animate-pulse rounded-full bg-white/70" />
+    <p className="mt-8 text-slate-500">กำลังตรวจสอบสิทธิ์…</p>
+    <div className="mt-4 grid gap-4 sm:grid-cols-2">{[1, 2, 3, 4].map((n) => <div key={n} className="h-20 animate-pulse rounded-2xl bg-white/70" />)}</div>
+  </div>;
 
   return <div className="py-8 sm:py-12">
     <header className="border-b pb-8" style={{borderColor:"var(--line)"}}>
@@ -101,7 +107,7 @@ export default function DevPage() {
           <section className="min-w-0 mt-10" key={zone}>
             <div className="mb-4 flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <p className="eyebrow">{locationNames[zone]}</p>
+                <p className="eyebrow">{zone === "front" ? "ZONE 1" : "ZONE 2"}</p>
                 <h2 className="mt-1 break-words text-2xl font-black">{locationNames[zone]}</h2>
               </div>
               <span className="shrink-0 rounded-full border bg-white px-3 py-1 text-sm font-bold text-slate-600" style={{borderColor:"var(--line)"}}>{zoneClubs.length} บูธ</span>

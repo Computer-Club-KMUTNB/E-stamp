@@ -75,7 +75,7 @@ export default function StaffLoginPage() {
       <h1 className="mt-2 text-3xl font-black">เข้าสู่ระบบด้วย PIN</h1>
       <p className="mt-2 text-sm leading-6 text-slate-600">กรอก PIN 6 หลักที่ได้รับจากผู้จัดงาน</p>
       <form className="mt-7" onSubmit={submit}>
-        <div className="flex justify-center gap-2" onPaste={handlePaste}>
+        <div className="flex w-full justify-center gap-1.5 sm:gap-2" role="group" aria-label={`PIN ${PIN_LENGTH} หลัก`} onPaste={handlePaste}>
           {pin.map((digit, i) => (
             <input
               key={i}
@@ -86,7 +86,9 @@ export default function StaffLoginPage() {
               value={digit}
               onChange={(e) => handleChange(i, e.target.value)}
               onKeyDown={(e) => handleKeyDown(i, e)}
-              className="h-14 w-12 rounded-2xl border-2 bg-white text-center text-2xl font-black outline-none transition"
+              onFocus={(e) => e.target.select()}
+              aria-label={`PIN หลักที่ ${i + 1}`}
+              className="h-14 min-w-0 max-w-[3.5rem] flex-1 rounded-2xl border-2 bg-white text-center text-2xl font-black outline-none transition"
               style={{
                 borderColor: digit ? "var(--brand)" : "var(--line)",
                 boxShadow: digit ? "0 0 0 4px rgba(173,59,39,.1)" : undefined,

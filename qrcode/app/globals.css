@@ -16,7 +16,7 @@ button,a { @apply focus-visible:outline-none focus-visible:ring-4 focus-visible:
 .site-brand-mark { @apply grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-xl; background:transparent; }
 .site-brand-mark img { @apply h-full w-full object-contain; }
 .site-brand-copy { @apply flex flex-col leading-none; }
-.site-brand-copy small { @apply mt-1 text-[9px] font-bold tracking-[.16em]; color:var(--muted); }
+.site-brand-copy small { @apply mt-1 text-[10px] font-bold tracking-[.16em]; color:var(--muted); }
 .site-nav-links { @apply flex items-center gap-1; }
 .site-footer { @apply mt-12 flex items-center justify-center gap-3 border-t py-6 text-center text-sm font-semibold text-slate-500; border-color:var(--line); }
 .site-footer img { @apply h-8 w-8 object-contain; }
@@ -24,15 +24,30 @@ button,a { @apply focus-visible:outline-none focus-visible:ring-4 focus-visible:
 .card { @apply rounded-3xl border bg-white/90 p-5 sm:p-8; border-color:var(--line); box-shadow:0 16px 45px rgba(23,32,29,.07); }
 .primary { @apply inline-flex min-h-14 items-center justify-center rounded-2xl px-6 py-3 text-lg font-bold text-white no-underline transition disabled:cursor-not-allowed disabled:opacity-50; background:var(--brand); box-shadow:0 9px 22px rgba(173,59,39,.22); }
 .primary:hover { background:var(--brand-dark); transform:translateY(-1px); }
+.primary:active { background:var(--brand-dark); transform:translateY(1px) scale(.99); box-shadow:0 3px 10px rgba(173,59,39,.2); }
 .secondary { @apply inline-flex min-h-14 items-center justify-center rounded-2xl border bg-white px-6 py-3 text-lg font-bold no-underline transition; border-color:var(--line); color:var(--ink); }
 .secondary:hover { border-color:var(--brand); color:var(--brand); }
+.secondary:active { transform:translateY(1px) scale(.99); background:#faf8f3; }
 .eyebrow { @apply text-xs font-black uppercase tracking-[.18em]; color:var(--brand); font-family:'Manrope',sans-serif; }
 .field { @apply mt-2 min-h-14 w-full rounded-2xl border-2 bg-white px-4 text-lg outline-none transition; border-color:var(--line); }
 .field:focus { border-color:var(--brand); box-shadow:0 0 0 4px rgba(173,59,39,.1); }
+.field[aria-invalid="true"] { border-color:#dc2626; background:#fef6f5; }
+/* appearance-none ตัดลูกศรของ select ทิ้ง จึงวาดลูกศรกลับเข้ามาเอง */
+select.field { @apply pr-11; background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%2369736f' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 7.5 10 12.5 15 7.5'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 1rem center; background-size:1.15rem; }
+select.field[data-placeholder="true"] { color:var(--muted); }
 .soft-panel { @apply rounded-2xl border p-4; border-color:var(--line); background:#faf8f3; }
 #qr-reader { overflow:hidden; }
 #qr-reader video { width:100%!important; height:100%!important; object-fit:cover; }
 #qr-reader img { display:inline-block; }
+/* Dashboard เปิดโหมดมืดโดยเติมคลาสที่ <html> — nav/footer ที่อยู่นอก dashboard.css ต้องตามไปด้วย */
+html.dashboard-dark { background:#151a17; }
+.dashboard-dark .site-brand { color:#f3f4f1; }
+.dashboard-dark .site-brand-copy small { color:#aeb7b2; }
+.dashboard-dark .site-nav, .dashboard-dark .site-footer { border-color:#3d4541; }
+.dashboard-dark .site-nav-link { color:#cbd5d0; }
+.dashboard-dark .site-nav-link:hover { background:rgba(255,255,255,.08); color:#fff; }
+.dashboard-dark .site-footer { color:#aeb7b2; }
+.dashboard-dark .site-footer img { filter:invert(1) brightness(1.6); }
 @media(max-width:640px){
   .site-nav{height:68px}
   .site-brand{gap:.55rem;font-size:.9rem}
@@ -46,4 +61,4 @@ button,a { @apply focus-visible:outline-none focus-visible:ring-4 focus-visible:
 }
 @media(max-width:380px){.site-brand-copy{display:none}.site-nav-links{gap:0}.site-nav-link{padding-inline:.55rem}.card{padding:15px}}
 @media(max-height:600px) and (orientation:landscape){#qr-reader{min-height:220px!important}.scanner-viewport{min-height:220px!important}}
-@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important;animation-duration:.01ms!important;animation-iteration-count:1!important}}
