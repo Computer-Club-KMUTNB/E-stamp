@@ -83,7 +83,7 @@ export function SexBreakdownPanel({ data }: { data: SexItem[] }) {
       <BarChart data={data} layout="vertical" margin={{ right:12 }}>
         <XAxis type="number" allowDecimals={false} hide/>
         <YAxis dataKey="label" type="category" width={148} stroke="var(--dashboard-muted)" fontSize={12} tickLine={false} axisLine={false}/>
-        <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [`${v.toLocaleString()} คน`]}/>
+        <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${Number(v).toLocaleString()} คน`]}/>
         <Bar dataKey="count" radius={[0,4,4,0]}>
           {data.map((item) => <Cell key={item.label} fill={item.color}/>)}
         </Bar>
@@ -100,7 +100,7 @@ export function FacultyRankingPanel({ data }: { data: FacultyRankItem[] }) {
       <BarChart data={display} layout="vertical" margin={{ right:12 }}>
         <XAxis type="number" allowDecimals={false} hide/>
         <YAxis dataKey="shortName" type="category" width={124} stroke="var(--dashboard-muted)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(name: string) => name.length > 17 ? `${name.slice(0, 16)}…` : name}/>
-        <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [`${v.toLocaleString()} คน`]} labelFormatter={(_,p) => p[0]?.payload?.faculty ?? ""}/>
+        <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${Number(v).toLocaleString()} คน`]} labelFormatter={(_,p) => p[0]?.payload?.faculty ?? ""}/>
         <Bar dataKey="count" fill="var(--dashboard-brand)" radius={[0,4,4,0]}/>
       </BarChart>
     </ResponsiveContainer></div> : <p className="dashboard-empty">ยังไม่มีข้อมูล</p>}
