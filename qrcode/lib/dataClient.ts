@@ -22,6 +22,7 @@ type UserStampsRow = {
 type ParticipantLoginRow = {
   hashed_user_id: string;
   student_id: string;
+  title: string;
   name: string;
   faculty: string;
   created_at: string;
@@ -97,12 +98,13 @@ async function hashStudentCode(studentCode: string): Promise<string> {
 
 export async function getStudentByToken(qrToken: string): Promise<Student | null> {
   if (!/^[a-f0-9]{64}$/i.test(qrToken)) return null;
-  const { data, error } = await supabase.rpc("get_student_by_token", { p_token: qrToken.toLowerCase() }).maybeSingle<{ hashed_user_id: string; student_id: string; name: string; faculty: string; created_at: string }>();
+  const { data, error } = await supabase.rpc("get_student_by_token", { p_token: qrToken.toLowerCase() }).maybeSingle<{ hashed_user_id: string; student_id: string; title: string; name: string; faculty: string; created_at: string }>();
   if (error) fail("ค้นหาผู้เข้าร่วมไม่สำเร็จ", error);
   if (!data) return null;
   return {
     id: data.hashed_user_id,
     studentCode: data.student_id,
+    title: data.title,
     name: data.name,
     faculty: data.faculty,
     qrToken: data.hashed_user_id,
@@ -110,12 +112,13 @@ export async function getStudentByToken(qrToken: string): Promise<Student | null
   };
 }
 
-export async function createStudent(studentCode: string, name: string, faculty: string): Promise<Student> {
+export async function createStudent(studentCode: string, title: string, name: string, faculty: string): Promise<Student> {
   const hashedUserId = await hashStudentCode(studentCode);
   const createdAt = new Date().toISOString();
   const { error } = await supabase.rpc("register_attendee", {
     p_hashed_user_id: hashedUserId,
     p_student_id: studentCode,
+    p_title: title,
     p_name: name.trim(),
     p_faculty: faculty,
   });
@@ -125,7 +128,7 @@ export async function createStudent(studentCode: string, name: string, faculty: 
     }
     fail("ลงทะเบียนผู้เข้าร่วมไม่สำเร็จ", error);
   }
-  return { id: hashedUserId, studentCode, name: name.trim(), faculty, qrToken: hashedUserId, createdAt };
+  return { id: hashedUserId, studentCode, title, name: name.trim(), faculty, qrToken: hashedUserId, createdAt };
 }
 
 export async function loginStudent(studentCode: string, name: string): Promise<{ student: Student; visitedClubIds: string[] } | null> {
@@ -140,6 +143,7 @@ export async function loginStudent(studentCode: string, name: string): Promise<{
     student: {
       id: data.hashed_user_id,
       studentCode: data.student_id,
+      title: data.title,
       name: data.name,
       faculty: data.faculty,
       qrToken: data.hashed_user_id,

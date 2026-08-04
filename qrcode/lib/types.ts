@@ -4,6 +4,7 @@ export type Location = Zone;
 export interface Student {
   id: string;
   studentCode: string;
+  title: string;
   name: string;
   faculty: string;
   qrToken: string;
