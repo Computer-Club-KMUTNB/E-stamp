@@ -25,6 +25,22 @@ export interface StampRow {
   is_collect_reward: boolean | null;
 }
 
+export interface UserInfoRow {
+  title: string | null;
+  faculty: string;
+}
+
+export interface SexItem {
+  label: string;
+  count: number;
+  color: string;
+}
+
+export interface FacultyRankItem {
+  faculty: string;
+  count: number;
+}
+
 export interface ActivityLog {
   id: string | number;
   action_type: string;

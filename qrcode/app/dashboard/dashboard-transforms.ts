@@ -3,9 +3,12 @@ import type {
   ActivityLog,
   BoothItem,
   BoothRow,
+  FacultyRankItem,
   FunnelItem,
+  SexItem,
   StampRow,
   TimelineItem,
+  UserInfoRow,
   Zone,
 } from "./dashboard-types";
 
@@ -84,7 +87,7 @@ export function buildFunnel(rows: StampRow[], zone: Zone, boothTotal: number): F
 }
 
 function csvCell(value: string | number | null): string {
-  return `"${String(value ?? "").replace(/"/g, "\"\"")}"`;
+  return `"${String(value ?? "").replace(/"/g, '""')}"`;
 }
 
 export function exportActivityCsv(logs: ActivityLog[]): void {
@@ -111,4 +114,30 @@ export function exportActivityCsv(logs: ActivityLog[]): void {
   link.click();
   link.remove();
   URL.revokeObjectURL(url);
+}
+
+export function buildSexBreakdown(rows: UserInfoRow[]): SexItem[] {
+  let male = 0, female = 0, unknown = 0;
+  rows.forEach(({ title }) => {
+    if (title === "นาย") male += 1;
+    else if (title === "นาง" || title === "นางสาว") female += 1;
+    else unknown += 1;
+  });
+  const items: SexItem[] = [
+    { label: "ชาย (นาย)", count: male, color: "#3b82f6" },
+    { label: "หญิง (นาง/นางสาว)", count: female, color: "#ec4899" },
+  ];
+  if (unknown > 0) items.push({ label: "ไม่ระบุ", count: unknown, color: "#94a3b8" });
+  return items;
+}
+
+export function buildFacultyRanking(rows: UserInfoRow[]): FacultyRankItem[] {
+  const map = new Map<string, number>();
+  rows.forEach(({ faculty }) => {
+    if (!faculty) return;
+    map.set(faculty, (map.get(faculty) ?? 0) + 1);
+  });
+  return Array.from(map.entries())
+    .sort(([, a], [, b]) => b - a)
+    .map(([faculty, count]) => ({ faculty, count }));
 }

@@ -3,11 +3,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, Download, Gift, MapPin, Moon, Sun, Users } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { ActivityFeed, BoothChart, FunnelChart, Metric, TimelineChart } from "./DashboardViews";
+import { ActivityFeed, BoothChart, FacultyRankingPanel, FunnelChart, Metric, SexBreakdownPanel, TimelineChart } from "./DashboardViews";
 import {
   buildBoothsWithVisits,
+  buildFacultyRanking,
   buildFunnel,
   buildRecentActivity,
+  buildSexBreakdown,
   buildTimeline,
   exportActivityCsv,
   percentage,
@@ -22,7 +24,7 @@ export default function DashboardPage() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [authed, setAuthed] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
-  const { stampRows, boothRows, logs, isLoading, error, refresh } = useDashboardData(authed);
+  const { stampRows, boothRows, logs, userInfoRows, isLoading, error, refresh } = useDashboardData(authed);
 
   useEffect(() => {
     setIsDarkMode(window.localStorage.getItem(THEME_KEY) === "dark");
@@ -83,6 +85,8 @@ export default function DashboardPage() {
   const backTotal = boothRows.filter((booth) => booth.zone === "back").length;
   const frontFunnel = useMemo(() => buildFunnel(stampRows, "front", frontTotal), [stampRows, frontTotal]);
   const backFunnel = useMemo(() => buildFunnel(stampRows, "back", backTotal), [stampRows, backTotal]);
+  const sexBreakdown = useMemo(() => buildSexBreakdown(userInfoRows), [userInfoRows]);
+  const facultyRanking = useMemo(() => buildFacultyRanking(userInfoRows), [userInfoRows]);
 
   if (!authed) return <div className="dashboard-container" aria-busy="true">
     <div className="dashboard-skeleton-header"><span/><span/></div>
@@ -145,5 +149,10 @@ export default function DashboardPage() {
         <FunnelChart title={`โซนหลัง · ${backTotal} บูธ`} data={backFunnel}/>
       </div>
     </section>
+
+    <div className="dashboard-content-grid">
+      <SexBreakdownPanel data={sexBreakdown} total={userInfoRows.length}/>
+      <FacultyRankingPanel data={facultyRanking}/>
+    </div>
   </div>;
 }
