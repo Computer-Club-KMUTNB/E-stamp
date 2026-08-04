@@ -6,6 +6,7 @@ import type { Club, Location, RewardBooth, RewardClaim, Stamp, Student, Zone } f
 type UserInfoRow = {
   hashed_user_id: string;
   student_id: string | null;
+  title: string | null;
   name: string;
   faculty: string;
   created_at: string;
@@ -83,6 +84,7 @@ function toStudent(row: UserInfoRow): Student {
   return {
     id: row.hashed_user_id,
     studentCode: row.student_id ?? "",
+    title: row.title ?? "",
     name: row.name,
     faculty: row.faculty,
     qrToken: row.hashed_user_id,
