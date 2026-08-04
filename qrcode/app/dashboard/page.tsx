@@ -139,6 +139,8 @@ export default function DashboardPage() {
     <div className="dashboard-booth-grid">
       <BoothChart title="อันดับบูธ" data={popular}/>
       <BoothChart title="บูธที่คนไปน้อยที่สุด" data={leastVisited} least/>
+      <SexBreakdownPanel data={sexBreakdown}/>
+      <FacultyRankingPanel data={facultyRanking}/>
     </div>
 
     <section className="dashboard-funnel-section dashboard-glass">
@@ -150,9 +152,5 @@ export default function DashboardPage() {
       </div>
     </section>
 
-    <div className="dashboard-content-grid">
-      <SexBreakdownPanel data={sexBreakdown} total={userInfoRows.length}/>
-      <FacultyRankingPanel data={facultyRanking}/>
-    </div>
   </div>;
 }
