@@ -102,9 +102,6 @@ export default function StaffLoginPage() {
           {loading ? "กำลังตรวจสอบ…" : "เข้าสู่ระบบ"}
         </button>
       </form>
-      <p className="mt-5 text-center text-xs text-slate-500">
-        ผู้ดูแลระบบ? <a href="/admin-login" className="font-bold text-slate-700 underline">เข้าสู่ระบบแบบ Admin</a>
-      </p>
     </section>
   </div>;
 }

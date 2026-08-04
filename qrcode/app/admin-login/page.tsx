@@ -68,7 +68,6 @@ export default function AdminLoginPage({ searchParams }: { searchParams?: { next
         {error && <p role="alert" className="rounded-2xl border border-red-200 bg-red-50 p-3 font-bold text-red-800">{error}</p>}
         <button className="primary w-full" disabled={loading}>{loading ? (isDashboardLogin ? "กำลังเข้าสู่ Dashboard…" : "กำลังตรวจสอบ…") : (isDashboardLogin ? "เข้าสู่ Dashboard" : "เข้าสู่ระบบ")}</button>
       </form>
-      <p className="mt-5 text-center text-xs text-slate-500">เจ้าหน้าที่บูธ? <a href="/staff-login" className="font-bold text-slate-700 underline">เข้าสู่ระบบด้วย PIN</a></p>
     </section>
   </div>;
 }
