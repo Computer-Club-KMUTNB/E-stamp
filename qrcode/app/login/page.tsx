@@ -6,7 +6,7 @@ import { PARTICIPANT_SESSION_KEY, notifyParticipantSessionChange } from "@/compo
 import { QrImage } from "@/components/QrImage";
 import { TurnstileChallenge } from "@/components/TurnstileChallenge";
 import { useTurnstileGate } from "@/components/useTurnstileGate";
-import { getAllClubs, loginStudent } from "@/lib/dataClient";
+import { getAllClubs, getStampsForStudent, loginStudent } from "@/lib/dataClient";
 import { locationNames } from "@/lib/mockData";
 import { supabase } from "@/lib/supabase";
 import type { Club, Student, Zone } from "@/lib/types";
@@ -27,7 +27,7 @@ export default function ParticipantLoginPage() {
   const [progressConnection, setProgressConnection] = useState<"connecting" | "live" | "fallback" | "offline">("connecting");
   const progressRefreshInFlight = useRef(false);
   const progressRefreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const turnstile = useTurnstileGate("participant_login_failed_attempts", "participant_login");
+  const turnstile = useTurnstileGate("participant_login_failed_attempts");
 
   useEffect(() => {
     getAllClubs().then(setClubs).catch(() => setClubs([])).finally(() => setClubsLoaded(true));
@@ -49,10 +49,13 @@ export default function ParticipantLoginPage() {
     if (progressRefreshInFlight.current || !navigator.onLine) return;
     progressRefreshInFlight.current = true;
     try {
-      const result = await loginStudent(currentStudent.studentCode, currentStudent.name);
-      if (!result || result.student.id !== currentStudent.id) return;
-      setVisitedClubIds(result.visitedClubIds);
-      window.sessionStorage.setItem(PARTICIPANT_SESSION_KEY, JSON.stringify(result));
+      const stamps = await getStampsForStudent(currentStudent.id);
+      const nextVisitedClubIds = stamps.map((stamp) => stamp.clubId);
+      setVisitedClubIds(nextVisitedClubIds);
+      window.sessionStorage.setItem(PARTICIPANT_SESSION_KEY, JSON.stringify({
+        student: currentStudent,
+        visitedClubIds: nextVisitedClubIds,
+      }));
     } catch (caught) {
       console.error("Participant progress refresh failed:", caught);
     } finally {
@@ -130,21 +133,17 @@ export default function ParticipantLoginPage() {
     if (!turnstile.ready) return setError("กำลังเตรียมระบบความปลอดภัย กรุณารอสักครู่");
     setLoading(true); setError("");
     try {
-      const verification = await turnstile.verifyChallenge();
-      if (!verification.ok) {
-        setError(verification.message);
-        return;
-      }
-      const result = await loginStudent(code, name);
-      if (!result) {
-        turnstile.markFailedAttempt();
-        setError("ไม่พบผู้ใช้นี้ กรุณาตรวจสอบชื่อและรหัสนักศึกษา");
+      const attempt = await loginStudent(code, name, turnstile.token);
+      turnstile.setChallengeRequired(attempt.challengeRequired);
+      if (!attempt.result) {
+        if (turnstile.token) turnstile.resetChallenge();
+        setError(attempt.message ?? "ไม่พบผู้ใช้นี้ กรุณาตรวจสอบชื่อและรหัสนักศึกษา");
         return;
       }
       turnstile.clearFailedAttempts();
-      setStudent(result.student);
-      setVisitedClubIds(result.visitedClubIds);
-      window.sessionStorage.setItem(PARTICIPANT_SESSION_KEY, JSON.stringify(result));
+      setStudent(attempt.result.student);
+      setVisitedClubIds(attempt.result.visitedClubIds);
+      window.sessionStorage.setItem(PARTICIPANT_SESSION_KEY, JSON.stringify(attempt.result));
       notifyParticipantSessionChange();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");

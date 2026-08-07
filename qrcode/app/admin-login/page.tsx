@@ -13,25 +13,22 @@ export default function AdminLoginPage({ searchParams }: { searchParams?: { next
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const isDashboardLogin = searchParams?.next === "/dashboard";
-  const turnstile = useTurnstileGate("dashboard_login_failed_attempts", "dashboard_login");
+  const turnstile = useTurnstileGate("dashboard_login_failed_attempts", true);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (isDashboardLogin && !turnstile.ready) return setError("กำลังเตรียมระบบความปลอดภัย กรุณารอสักครู่");
+    if (isDashboardLogin && !turnstile.token) return setError("กรุณายืนยันความปลอดภัยก่อนเข้าสู่ระบบ");
     setLoading(true); setError("");
     try {
       if (isDashboardLogin) {
-        const verification = await turnstile.verifyChallenge();
-        if (!verification.ok) {
-          setError(verification.message);
-          return;
-        }
         const { error: signInError } = await supabase.auth.signInWithPassword({
           email: email.trim(),
           password,
+          options: { captchaToken: turnstile.token },
         });
         if (signInError) {
-          turnstile.markFailedAttempt();
+          turnstile.resetChallenge();
           setError("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
           return;
         }

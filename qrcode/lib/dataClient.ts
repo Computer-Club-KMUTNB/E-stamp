@@ -20,15 +20,10 @@ type UserStampsRow = {
   updated_at: string;
 };
 
-type ParticipantLoginRow = {
-  hashed_user_id: string;
-  student_id: string;
-  title: string;
-  name: string;
-  faculty: string;
-  created_at: string;
-  front_booths_visited: string[];
-  back_booths_visited: string[];
+export type ParticipantLoginAttempt = {
+  result: { student: Student; visitedClubIds: string[] } | null;
+  challengeRequired: boolean;
+  message?: string;
 };
 
 const boothNumberCollator = new Intl.Collator("th", {
@@ -133,26 +128,31 @@ export async function createStudent(studentCode: string, title: string, name: st
   return { id: hashedUserId, studentCode, title, name: name.trim(), faculty, qrToken: hashedUserId, createdAt };
 }
 
-export async function loginStudent(studentCode: string, name: string): Promise<{ student: Student; visitedClubIds: string[] } | null> {
-  const hashedUserId = await hashStudentCode(studentCode);
-  const { data, error } = await supabase.rpc("login_attendee", {
-    p_hashed_user_id: hashedUserId,
-    p_name: name.trim(),
-  }).maybeSingle<ParticipantLoginRow>();
-  if (error) fail("เข้าสู่ระบบไม่สำเร็จ", error);
-  if (!data) return null;
-  return {
-    student: {
-      id: data.hashed_user_id,
-      studentCode: data.student_id,
-      title: data.title,
-      name: data.name,
-      faculty: data.faculty,
-      qrToken: data.hashed_user_id,
-      createdAt: data.created_at,
-    },
-    visitedClubIds: [...data.front_booths_visited, ...data.back_booths_visited],
-  };
+export async function loginStudent(studentCode: string, name: string, token = ""): Promise<ParticipantLoginAttempt> {
+  const response = await fetch("/api/login/participant", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ studentCode, name: name.trim(), token }),
+  });
+  const body = await response.json().catch(() => null) as {
+    success?: boolean;
+    challengeRequired?: boolean;
+    message?: string;
+    result?: { student: Student; visitedClubIds: string[] };
+  } | null;
+
+  if (!response.ok) {
+    if (response.status === 401 || response.status === 403) {
+      return {
+        result: null,
+        challengeRequired: Boolean(body?.challengeRequired),
+        message: body?.message,
+      };
+    }
+    throw new Error(body?.message ?? "เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
+  }
+  if (!body?.success || !body.result) throw new Error("รูปแบบข้อมูลเข้าสู่ระบบไม่ถูกต้อง");
+  return { result: body.result, challengeRequired: false };
 }
 
 export async function getClubByToken(token: string): Promise<Club | null> {

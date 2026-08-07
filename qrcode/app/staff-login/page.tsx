@@ -3,7 +3,6 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { TurnstileChallenge } from "@/components/TurnstileChallenge";
 import { useTurnstileGate } from "@/components/useTurnstileGate";
-import { supabase } from "@/lib/supabase";
 
 const PIN_LENGTH = 6;
 
@@ -12,7 +11,7 @@ export default function StaffLoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const inputs = useRef<(HTMLInputElement | null)[]>([]);
-  const turnstile = useTurnstileGate("staff_login_failed_attempts", "staff_login");
+  const turnstile = useTurnstileGate("staff_login_failed_attempts");
 
   useEffect(() => { inputs.current[0]?.focus({ preventScroll: true }); }, []);
 
@@ -49,28 +48,34 @@ export default function StaffLoginPage() {
     if (!turnstile.ready) return setError("กำลังเตรียมระบบความปลอดภัย กรุณารอสักครู่");
     setLoading(true); setError("");
     try {
-      const verification = await turnstile.verifyChallenge();
-      if (!verification.ok) {
-        setError(verification.message);
-        return;
+      const response = await fetch("/api/login/staff", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pin: pinValue, token: turnstile.token }),
+      });
+      const result = await response.json().catch(() => null) as {
+        success?: boolean;
+        challengeRequired?: boolean;
+        message?: string;
+        boothId?: string;
+      } | null;
+      if (typeof result?.challengeRequired === "boolean") {
+        turnstile.setChallengeRequired(result.challengeRequired);
       }
-      const { data, error: rpcError } = await supabase
-        .rpc("lookup_booth_pin", { p_pin: pinValue })
-        .single<string>();
-      if (rpcError || !data) {
-        turnstile.markFailedAttempt();
-        setError("PIN ไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง");
+      if (!response.ok || !result?.success || !result.boothId) {
+        if (turnstile.token) turnstile.resetChallenge();
+        setError(result?.message ?? "เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
         setPin(Array(PIN_LENGTH).fill(""));
         inputs.current[0]?.focus();
         return;
       }
       // Store PIN session in sessionStorage
       turnstile.clearFailedAttempts();
-      window.sessionStorage.setItem("staff_pin_booth", data);
-      if (data === "reward") {
+      window.sessionStorage.setItem("staff_pin_booth", result.boothId);
+      if (result.boothId === "reward") {
         window.location.replace(`/reward/reward`);
       } else {
-        window.location.replace(`/scan/${encodeURIComponent(data)}`);
+        window.location.replace(`/scan/${encodeURIComponent(result.boothId)}`);
       }
     } catch {
       setError("เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");

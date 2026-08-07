@@ -70,7 +70,7 @@ export function TurnstileChallenge({ action, onTokenChange }: TurnstileChallenge
     <Script id="cloudflare-turnstile" src={TURNSTILE_SCRIPT_URL} strategy="afterInteractive" onReady={() => setScriptReady(true)} onError={() => setWidgetError(true)} />
     {siteKey
       ? <div ref={containerRef} className="w-full overflow-hidden" />
-      : <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm font-bold text-red-700">ยังไม่ได้ตั้งค่า NEXT_PUBLIC_TURNSTILE_SITE_KEY</p>}
-    {widgetError && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm font-bold text-red-700">โหลด Turnstile ไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่</p>}
+      : <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm font-bold text-red-700">ระบบยืนยันความปลอดภัยยังไม่พร้อมใช้งาน</p>}
+    {widgetError && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm font-bold text-red-700">โหลดระบบยืนยันความปลอดภัยไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่</p>}
   </>;
 }
