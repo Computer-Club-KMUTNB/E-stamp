@@ -11,7 +11,7 @@ export default function StaffLoginPage() {
   const [loading, setLoading] = useState(false);
   const inputs = useRef<(HTMLInputElement | null)[]>([]);
 
-  useEffect(() => { inputs.current[0]?.focus(); }, []);
+  useEffect(() => { inputs.current[0]?.focus({ preventScroll: true }); }, []);
 
   function handleChange(index: number, value: string) {
     const digit = value.replace(/\D/g, "").slice(-1);
@@ -68,14 +68,16 @@ export default function StaffLoginPage() {
 
   const pinFilled = pin.every(Boolean);
 
-  return <div className="mx-auto grid min-h-[calc(100vh-5rem)] max-w-md place-items-center py-10">
-    <section className="card w-full">
-      <div className="mb-6 grid h-14 w-14 place-items-center rounded-2xl bg-slate-950 text-2xl text-white">⌗</div>
-      <p className="eyebrow">BOOTH STAFF ACCESS</p>
-      <h1 className="mt-2 text-3xl font-black">เข้าสู่ระบบด้วย PIN</h1>
-      <p className="mt-2 text-sm leading-6 text-slate-600">กรอก PIN 6 หลักที่ได้รับจากผู้จัดงาน</p>
-      <form className="mt-7" onSubmit={submit}>
-        <div className="flex w-full justify-center gap-1.5 sm:gap-2" role="group" aria-label={`PIN ${PIN_LENGTH} หลัก`} onPaste={handlePaste}>
+  return <div className="staff-login-shell mx-auto flex min-h-[calc(100dvh-4.25rem)] w-full max-w-md flex-col justify-center py-5 sm:min-h-[calc(100dvh-5rem)] sm:py-10">
+    <section className="staff-login-card card w-full max-[380px]:!p-3">
+      <div className="staff-login-intro">
+        <div className="mb-4 grid h-12 w-12 place-items-center rounded-xl bg-slate-950 text-xl text-white sm:mb-6 sm:h-14 sm:w-14 sm:rounded-2xl sm:text-2xl">⌗</div>
+        <p className="eyebrow">BOOTH STAFF ACCESS</p>
+        <h1 className="mt-2 text-[1.65rem] font-black leading-tight sm:text-3xl">เข้าสู่ระบบด้วย PIN</h1>
+        <p className="mt-2 text-sm leading-6 text-slate-600">กรอก PIN 6 หลักที่ได้รับจากผู้จัดงาน</p>
+      </div>
+      <form className="staff-login-form mt-6 sm:mt-7" onSubmit={submit}>
+        <div className="grid w-full grid-cols-6 gap-1 sm:gap-2" role="group" aria-label={`PIN ${PIN_LENGTH} หลัก`} onPaste={handlePaste}>
           {pin.map((digit, i) => (
             <input
               key={i}
@@ -88,7 +90,7 @@ export default function StaffLoginPage() {
               onKeyDown={(e) => handleKeyDown(i, e)}
               onFocus={(e) => e.target.select()}
               aria-label={`PIN หลักที่ ${i + 1}`}
-              className="h-14 min-w-0 max-w-[3.5rem] flex-1 rounded-2xl border-2 bg-white text-center text-2xl font-black outline-none transition"
+              className="h-12 w-full min-w-0 rounded-xl border-2 bg-white text-center text-xl font-black outline-none transition sm:h-14 sm:rounded-2xl sm:text-2xl"
               style={{
                 borderColor: digit ? "var(--brand)" : "var(--line)",
                 boxShadow: digit ? "0 0 0 4px rgba(173,59,39,.1)" : undefined,
@@ -97,8 +99,8 @@ export default function StaffLoginPage() {
             />
           ))}
         </div>
-        {error && <p role="alert" className="mt-5 rounded-2xl border border-red-200 bg-red-50 p-3 text-center font-bold text-red-800">{error}</p>}
-        <button className="primary mt-7 w-full" disabled={loading || !pinFilled}>
+        {error && <p role="alert" className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-3 text-center text-sm font-bold text-red-800 sm:mt-5 sm:text-base">{error}</p>}
+        <button className="primary mt-6 w-full sm:mt-7" disabled={loading || !pinFilled}>
           {loading ? "กำลังตรวจสอบ…" : "เข้าสู่ระบบ"}
         </button>
       </form>

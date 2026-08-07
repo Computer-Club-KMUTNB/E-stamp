@@ -60,5 +60,10 @@ html.dashboard-dark { background:#151a17; }
   h1,h2,p{overflow-wrap:anywhere}
 }
 @media(max-width:380px){.site-brand-copy{display:none}.site-nav-links{gap:0}.site-nav-link{padding-inline:.55rem}.card{padding:15px}}
+@media(max-height:600px) and (orientation:landscape) and (min-width:600px){
+  .staff-login-shell{max-width:44rem;justify-content:flex-start;padding-block:1rem}
+  .staff-login-card{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);align-items:center;gap:1.5rem;padding:1.25rem}
+  .staff-login-form{margin-top:0}
+}
 @media(max-height:600px) and (orientation:landscape){#qr-reader{min-height:220px!important}.scanner-viewport{min-height:220px!important}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important;animation-duration:.01ms!important;animation-iteration-count:1!important}}

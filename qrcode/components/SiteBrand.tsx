@@ -8,6 +8,13 @@ export function SiteBrand() {
   const isStaffPage = pathname === "/staff-login" || pathname === "/dev" || pathname.startsWith("/club/") || pathname.startsWith("/reward/");
   const isDashboardPage = pathname === "/dashboard";
   const isAdminPage = isDashboardPage || pathname === "/admin-login";
+  const isBrandDisabled = pathname === "/staff-login"
+    || pathname.startsWith("/scan/")
+    || pathname === "/admin-login"
+    || isDashboardPage;
+  const brandContent = <><span className="site-brand-mark"><img src="/site-logo.png" alt="" /></span><span className="site-brand-copy"><span>OPENWORLD KMUTNB</span><small>{isAdminPage ? "FOR ADMIN" : isStaffPage ? "FOR STAFF" : "FOR PARTICIPANTS"}</small></span></>;
 
-  return <Link href={isDashboardPage ? "/dashboard" : isStaffPage ? "/dev" : "/"} className="site-brand"><span className="site-brand-mark"><img src="/site-logo.png" alt="" /></span><span className="site-brand-copy"><span>OPENWORLD KMUTNB</span><small>{isAdminPage ? "FOR ADMIN" : isStaffPage ? "FOR STAFF" : "FOR PARTICIPANTS"}</small></span></Link>;
+  if (isBrandDisabled) return <div className="site-brand">{brandContent}</div>;
+
+  return <Link href={isStaffPage ? "/dev" : "/"} className="site-brand">{brandContent}</Link>;
 }
