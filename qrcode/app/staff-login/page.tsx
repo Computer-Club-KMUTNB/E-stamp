@@ -1,6 +1,8 @@
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
+import { TurnstileChallenge } from "@/components/TurnstileChallenge";
+import { TURNSTILE_THRESHOLD, useTurnstileGate } from "@/components/useTurnstileGate";
 import { supabase } from "@/lib/supabase";
 
 const PIN_LENGTH = 6;
@@ -10,6 +12,7 @@ export default function StaffLoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const inputs = useRef<(HTMLInputElement | null)[]>([]);
+  const turnstile = useTurnstileGate("staff_login_failed_attempts", "staff_login");
 
   useEffect(() => { inputs.current[0]?.focus({ preventScroll: true }); }, []);
 
@@ -18,6 +21,7 @@ export default function StaffLoginPage() {
     const next = [...pin];
     next[index] = digit;
     setPin(next);
+    if (error) setError("");
     if (digit && index < PIN_LENGTH - 1) inputs.current[index + 1]?.focus();
   }
 
@@ -34,6 +38,7 @@ export default function StaffLoginPage() {
     const next = [...pin];
     digits.split("").forEach((d, i) => { next[i] = d; });
     setPin(next);
+    if (error) setError("");
     inputs.current[Math.min(digits.length, PIN_LENGTH - 1)]?.focus();
   }
 
@@ -41,18 +46,30 @@ export default function StaffLoginPage() {
     event.preventDefault();
     const pinValue = pin.join("");
     if (pinValue.length < PIN_LENGTH) return setError("กรุณากรอก PIN ให้ครบ 6 หลัก");
+    if (!turnstile.ready) return setError("กำลังเตรียมระบบความปลอดภัย กรุณารอสักครู่");
     setLoading(true); setError("");
     try {
+      const verification = await turnstile.verifyChallenge();
+      if (!verification.ok) {
+        setError(verification.message);
+        return;
+      }
       const { data, error: rpcError } = await supabase
         .rpc("lookup_booth_pin", { p_pin: pinValue })
         .single<string>();
       if (rpcError || !data) {
-        setError("PIN ไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง");
+        const nextFailedAttempts = turnstile.markFailedAttempt();
+        setError(nextFailedAttempts === TURNSTILE_THRESHOLD
+          ? "PIN ไม่ถูกต้องครบ 3 ครั้ง กรุณายืนยัน Turnstile ก่อนลองใหม่"
+          : nextFailedAttempts < TURNSTILE_THRESHOLD
+            ? `PIN ไม่ถูกต้อง เหลืออีก ${TURNSTILE_THRESHOLD - nextFailedAttempts} ครั้งก่อนต้องยืนยัน Turnstile`
+            : "PIN ไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง");
         setPin(Array(PIN_LENGTH).fill(""));
         inputs.current[0]?.focus();
         return;
       }
       // Store PIN session in sessionStorage
+      turnstile.clearFailedAttempts();
       window.sessionStorage.setItem("staff_pin_booth", data);
       if (data === "reward") {
         window.location.replace(`/reward/reward`);
@@ -99,8 +116,9 @@ export default function StaffLoginPage() {
             />
           ))}
         </div>
+        {turnstile.required && <div className="mt-4"><TurnstileChallenge key={turnstile.widgetKey} action="staff_login" onTokenChange={turnstile.setToken} /></div>}
         {error && <p role="alert" className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-3 text-center text-sm font-bold text-red-800 sm:mt-5 sm:text-base">{error}</p>}
-        <button className="primary mt-6 w-full sm:mt-7" disabled={loading || !pinFilled}>
+        <button className="primary mt-6 w-full sm:mt-7" disabled={loading || !turnstile.ready || !pinFilled || (turnstile.required && !turnstile.token)}>
           {loading ? "กำลังตรวจสอบ…" : "เข้าสู่ระบบ"}
         </button>
       </form>

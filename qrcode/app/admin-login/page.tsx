@@ -2,6 +2,8 @@
 
 import { FormEvent, useState } from "react";
 import { adminLogin } from "@/lib/adminSession";
+import { TurnstileChallenge } from "@/components/TurnstileChallenge";
+import { TURNSTILE_THRESHOLD, useTurnstileGate } from "@/components/useTurnstileGate";
 import { supabase } from "@/lib/supabase";
 
 export default function AdminLoginPage({ searchParams }: { searchParams?: { next?: string } }) {
@@ -11,20 +13,33 @@ export default function AdminLoginPage({ searchParams }: { searchParams?: { next
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const isDashboardLogin = searchParams?.next === "/dashboard";
+  const turnstile = useTurnstileGate("dashboard_login_failed_attempts", "dashboard_login");
 
   async function submit(event: FormEvent) {
     event.preventDefault();
+    if (isDashboardLogin && !turnstile.ready) return setError("กำลังเตรียมระบบความปลอดภัย กรุณารอสักครู่");
     setLoading(true); setError("");
     try {
       if (isDashboardLogin) {
+        const verification = await turnstile.verifyChallenge();
+        if (!verification.ok) {
+          setError(verification.message);
+          return;
+        }
         const { error: signInError } = await supabase.auth.signInWithPassword({
           email: email.trim(),
           password,
         });
         if (signInError) {
-          setError("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+          const nextFailedAttempts = turnstile.markFailedAttempt();
+          setError(nextFailedAttempts === TURNSTILE_THRESHOLD
+            ? "อีเมลหรือรหัสผ่านไม่ถูกต้องครบ 3 ครั้ง กรุณายืนยัน Turnstile ก่อนลองใหม่"
+            : nextFailedAttempts < TURNSTILE_THRESHOLD
+              ? `อีเมลหรือรหัสผ่านไม่ถูกต้อง เหลืออีก ${TURNSTILE_THRESHOLD - nextFailedAttempts} ครั้งก่อนต้องยืนยัน Turnstile`
+              : "อีเมลหรือรหัสผ่านไม่ถูกต้อง");
           return;
         }
+        turnstile.clearFailedAttempts();
         window.location.replace("/dashboard");
         return;
       }
@@ -65,8 +80,9 @@ export default function AdminLoginPage({ searchParams }: { searchParams?: { next
             <button type="button" onClick={() => setShowPassword(v => !v)} aria-pressed={showPassword} className="absolute right-2 top-1/2 -translate-y-1/2 rounded-xl px-3 py-2 text-sm font-bold text-slate-600 hover:bg-slate-100">{showPassword ? "ซ่อน" : "แสดง"}</button>
           </div>
         </div>
+        {isDashboardLogin && turnstile.required && <TurnstileChallenge key={turnstile.widgetKey} action="dashboard_login" onTokenChange={turnstile.setToken} />}
         {error && <p role="alert" className="rounded-2xl border border-red-200 bg-red-50 p-3 font-bold text-red-800">{error}</p>}
-        <button className="primary w-full" disabled={loading}>{loading ? (isDashboardLogin ? "กำลังเข้าสู่ Dashboard…" : "กำลังตรวจสอบ…") : (isDashboardLogin ? "เข้าสู่ Dashboard" : "เข้าสู่ระบบ")}</button>
+        <button className="primary w-full" disabled={loading || (isDashboardLogin && (!turnstile.ready || (turnstile.required && !turnstile.token)))}>{loading ? (isDashboardLogin ? "กำลังเข้าสู่ Dashboard…" : "กำลังตรวจสอบ…") : (isDashboardLogin ? "เข้าสู่ Dashboard" : "เข้าสู่ระบบ")}</button>
       </form>
     </section>
   </div>;

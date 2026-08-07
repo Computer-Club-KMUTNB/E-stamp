@@ -4,6 +4,8 @@ import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { PARTICIPANT_SESSION_KEY, notifyParticipantSessionChange } from "@/components/AuthNav";
 import { QrImage } from "@/components/QrImage";
+import { TurnstileChallenge } from "@/components/TurnstileChallenge";
+import { TURNSTILE_THRESHOLD, useTurnstileGate } from "@/components/useTurnstileGate";
 import { getAllClubs, loginStudent } from "@/lib/dataClient";
 import { locationNames } from "@/lib/mockData";
 import { supabase } from "@/lib/supabase";
@@ -25,6 +27,7 @@ export default function ParticipantLoginPage() {
   const [progressConnection, setProgressConnection] = useState<"connecting" | "live" | "fallback" | "offline">("connecting");
   const progressRefreshInFlight = useRef(false);
   const progressRefreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const turnstile = useTurnstileGate("participant_login_failed_attempts", "participant_login");
 
   useEffect(() => {
     getAllClubs().then(setClubs).catch(() => setClubs([])).finally(() => setClubsLoaded(true));
@@ -124,13 +127,25 @@ export default function ParticipantLoginPage() {
     event.preventDefault();
     if (name.trim().length < 2) return setError("กรุณากรอกชื่อ–นามสกุล");
     if (!/^\d{13}$/.test(code)) return setError("รหัสนักศึกษาต้องเป็นตัวเลข 13 หลัก");
+    if (!turnstile.ready) return setError("กำลังเตรียมระบบความปลอดภัย กรุณารอสักครู่");
     setLoading(true); setError("");
     try {
-      const result = await loginStudent(code, name);
-      if (!result) {
-        setError("ไม่พบผู้ใช้นี้ กรุณาตรวจสอบชื่อและรหัสนักศึกษา");
+      const verification = await turnstile.verifyChallenge();
+      if (!verification.ok) {
+        setError(verification.message);
         return;
       }
+      const result = await loginStudent(code, name);
+      if (!result) {
+        const nextFailedAttempts = turnstile.markFailedAttempt();
+        setError(nextFailedAttempts === TURNSTILE_THRESHOLD
+          ? "ไม่พบผู้ใช้ครบ 3 ครั้ง กรุณายืนยัน Turnstile ก่อนลองใหม่"
+          : nextFailedAttempts < TURNSTILE_THRESHOLD
+            ? `ไม่พบผู้ใช้ เหลืออีก ${TURNSTILE_THRESHOLD - nextFailedAttempts} ครั้งก่อนต้องยืนยัน Turnstile`
+            : "ไม่พบผู้ใช้นี้ กรุณาตรวจสอบชื่อและรหัสนักศึกษา");
+        return;
+      }
+      turnstile.clearFailedAttempts();
       setStudent(result.student);
       setVisitedClubIds(result.visitedClubIds);
       window.sessionStorage.setItem(PARTICIPANT_SESSION_KEY, JSON.stringify(result));
@@ -194,5 +209,26 @@ export default function ParticipantLoginPage() {
     </div>;
   }
 
-  return <div className="mx-auto grid min-h-[calc(100vh-5rem)] max-w-md place-items-center py-10"><section className="card w-full"><p className="eyebrow">PARTICIPANT LOGIN</p><h1 className="mt-2 text-3xl font-black">เข้าสู่ระบบผู้เข้าร่วม</h1><p className="mt-2 text-sm leading-6 text-slate-600">ใช้ชื่อและรหัสนักศึกษาที่ลงทะเบียนไว้ เพื่อดู QR และความคืบหน้าของคุณ</p><form className="mt-7 space-y-4" onSubmit={submit}><div><label className="block font-bold" htmlFor="name">ชื่อ–นามสกุล</label><input id="name" autoComplete="name" maxLength={120} required value={name} onChange={(e) => { setName(e.target.value); if (error) setError(""); }} className="field" placeholder="เช่น สมชาย ใจดี" /></div><div><div className="flex items-end justify-between"><label className="block font-bold" htmlFor="studentCode">รหัสนักศึกษา</label><span className={`text-xs ${code.length === 13 ? "text-green-700" : "text-slate-500"}`}>{code.length}/13</span></div><input id="studentCode" inputMode="numeric" autoComplete="off" maxLength={13} required value={code} onChange={(e) => { setCode(e.target.value.replace(/\D/g, "")); if (error) setError(""); }} className="field font-mono tracking-wider" placeholder="6901234567890" /></div>{error && <p role="alert" className="rounded-2xl border border-red-200 bg-red-50 p-4 font-semibold text-red-800">{error}</p>}<button disabled={loading} className="primary w-full" type="submit">{loading ? "กำลังตรวจสอบ…" : "เข้าสู่ระบบ"}</button></form><p className="mt-5 text-center text-sm text-slate-500">ลืมรหัส? กรุณาติดต่อที่บูธรับรางวัล</p><p className="mt-3 text-center text-sm text-slate-600">ยังไม่มีบัญชี? <Link className="font-bold text-red-800 underline" href="/register">ลงทะเบียน</Link></p></section></div>;
+  return <div className="mx-auto grid min-h-[calc(100vh-5rem)] max-w-md place-items-center py-10">
+    <section className="card w-full">
+      <p className="eyebrow">PARTICIPANT LOGIN</p>
+      <h1 className="mt-2 text-3xl font-black">เข้าสู่ระบบผู้เข้าร่วม</h1>
+      <p className="mt-2 text-sm leading-6 text-slate-600">ใช้ชื่อและรหัสนักศึกษาที่ลงทะเบียนไว้ เพื่อดู QR และความคืบหน้าของคุณ</p>
+      <form className="mt-7 space-y-4" onSubmit={submit}>
+        <div>
+          <label className="block font-bold" htmlFor="name">ชื่อ–นามสกุล</label>
+          <input id="name" autoComplete="name" maxLength={120} required value={name} onChange={(e) => { setName(e.target.value); if (error) setError(""); }} className="field" placeholder="เช่น สมชาย ใจดี" />
+        </div>
+        <div>
+          <div className="flex items-end justify-between"><label className="block font-bold" htmlFor="studentCode">รหัสนักศึกษา</label><span className={`text-xs ${code.length === 13 ? "text-green-700" : "text-slate-500"}`}>{code.length}/13</span></div>
+          <input id="studentCode" inputMode="numeric" autoComplete="off" maxLength={13} required value={code} onChange={(e) => { setCode(e.target.value.replace(/\D/g, "")); if (error) setError(""); }} className="field font-mono tracking-wider" placeholder="6901234567890" />
+        </div>
+        {turnstile.required && <TurnstileChallenge key={turnstile.widgetKey} action="participant_login" onTokenChange={turnstile.setToken} />}
+        {error && <p role="alert" className="rounded-2xl border border-red-200 bg-red-50 p-4 font-semibold text-red-800">{error}</p>}
+        <button disabled={loading || !turnstile.ready || (turnstile.required && !turnstile.token)} className="primary w-full" type="submit">{loading ? "กำลังตรวจสอบ…" : "เข้าสู่ระบบ"}</button>
+      </form>
+      <p className="mt-5 text-center text-sm text-slate-500">ลืมรหัส? กรุณาติดต่อที่บูธรับรางวัล</p>
+      <p className="mt-3 text-center text-sm text-slate-600">ยังไม่มีบัญชี? <Link className="font-bold text-red-800 underline" href="/register">ลงทะเบียน</Link></p>
+    </section>
+  </div>;
 }
