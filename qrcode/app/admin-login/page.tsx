@@ -3,7 +3,7 @@
 import { FormEvent, useState } from "react";
 import { adminLogin } from "@/lib/adminSession";
 import { TurnstileChallenge } from "@/components/TurnstileChallenge";
-import { TURNSTILE_THRESHOLD, useTurnstileGate } from "@/components/useTurnstileGate";
+import { useTurnstileGate } from "@/components/useTurnstileGate";
 import { supabase } from "@/lib/supabase";
 
 export default function AdminLoginPage({ searchParams }: { searchParams?: { next?: string } }) {
@@ -31,12 +31,8 @@ export default function AdminLoginPage({ searchParams }: { searchParams?: { next
           password,
         });
         if (signInError) {
-          const nextFailedAttempts = turnstile.markFailedAttempt();
-          setError(nextFailedAttempts === TURNSTILE_THRESHOLD
-            ? "อีเมลหรือรหัสผ่านไม่ถูกต้องครบ 3 ครั้ง กรุณายืนยัน Turnstile ก่อนลองใหม่"
-            : nextFailedAttempts < TURNSTILE_THRESHOLD
-              ? `อีเมลหรือรหัสผ่านไม่ถูกต้อง เหลืออีก ${TURNSTILE_THRESHOLD - nextFailedAttempts} ครั้งก่อนต้องยืนยัน Turnstile`
-              : "อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+          turnstile.markFailedAttempt();
+          setError("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
           return;
         }
         turnstile.clearFailedAttempts();

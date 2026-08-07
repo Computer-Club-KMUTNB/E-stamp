@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { TurnstileChallenge } from "@/components/TurnstileChallenge";
-import { TURNSTILE_THRESHOLD, useTurnstileGate } from "@/components/useTurnstileGate";
+import { useTurnstileGate } from "@/components/useTurnstileGate";
 import { supabase } from "@/lib/supabase";
 
 const PIN_LENGTH = 6;
@@ -58,12 +58,8 @@ export default function StaffLoginPage() {
         .rpc("lookup_booth_pin", { p_pin: pinValue })
         .single<string>();
       if (rpcError || !data) {
-        const nextFailedAttempts = turnstile.markFailedAttempt();
-        setError(nextFailedAttempts === TURNSTILE_THRESHOLD
-          ? "PIN ไม่ถูกต้องครบ 3 ครั้ง กรุณายืนยัน Turnstile ก่อนลองใหม่"
-          : nextFailedAttempts < TURNSTILE_THRESHOLD
-            ? `PIN ไม่ถูกต้อง เหลืออีก ${TURNSTILE_THRESHOLD - nextFailedAttempts} ครั้งก่อนต้องยืนยัน Turnstile`
-            : "PIN ไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง");
+        turnstile.markFailedAttempt();
+        setError("PIN ไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง");
         setPin(Array(PIN_LENGTH).fill(""));
         inputs.current[0]?.focus();
         return;

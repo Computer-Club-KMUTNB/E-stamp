@@ -5,7 +5,7 @@ import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { PARTICIPANT_SESSION_KEY, notifyParticipantSessionChange } from "@/components/AuthNav";
 import { QrImage } from "@/components/QrImage";
 import { TurnstileChallenge } from "@/components/TurnstileChallenge";
-import { TURNSTILE_THRESHOLD, useTurnstileGate } from "@/components/useTurnstileGate";
+import { useTurnstileGate } from "@/components/useTurnstileGate";
 import { getAllClubs, loginStudent } from "@/lib/dataClient";
 import { locationNames } from "@/lib/mockData";
 import { supabase } from "@/lib/supabase";
@@ -137,12 +137,8 @@ export default function ParticipantLoginPage() {
       }
       const result = await loginStudent(code, name);
       if (!result) {
-        const nextFailedAttempts = turnstile.markFailedAttempt();
-        setError(nextFailedAttempts === TURNSTILE_THRESHOLD
-          ? "ไม่พบผู้ใช้ครบ 3 ครั้ง กรุณายืนยัน Turnstile ก่อนลองใหม่"
-          : nextFailedAttempts < TURNSTILE_THRESHOLD
-            ? `ไม่พบผู้ใช้ เหลืออีก ${TURNSTILE_THRESHOLD - nextFailedAttempts} ครั้งก่อนต้องยืนยัน Turnstile`
-            : "ไม่พบผู้ใช้นี้ กรุณาตรวจสอบชื่อและรหัสนักศึกษา");
+        turnstile.markFailedAttempt();
+        setError("ไม่พบผู้ใช้นี้ กรุณาตรวจสอบชื่อและรหัสนักศึกษา");
         return;
       }
       turnstile.clearFailedAttempts();
