@@ -5,8 +5,9 @@ import { getSupabaseAdmin, getSupabaseSecretKey } from "./supabaseAdmin";
 import { getRequestIp, verifyTurnstileToken } from "./turnstile";
 
 export type ProtectedLoginAction = "staff_login" | "participant_login";
+export type RateLimitAction = ProtectedLoginAction | "participant_register";
 
-type AttemptReservation = {
+export type AttemptReservation = {
   allowed: boolean;
   challengeRequired: boolean;
 };
@@ -16,13 +17,17 @@ export type LoginProtectionResult = AttemptReservation & {
   challengeFailed?: boolean;
 };
 
-function createClientKey(request: Request, action: ProtectedLoginAction): string {
+export function createClientKey(request: Request, action: RateLimitAction, discriminator = ""): string {
   const secret = process.env.LOGIN_RATE_LIMIT_SECRET || getSupabaseSecretKey();
-  const digest = createHmac("sha256", secret).update(getRequestIp(request)).digest("hex");
+  const digest = createHmac("sha256", secret)
+    .update(getRequestIp(request))
+    .update("\0")
+    .update(discriminator)
+    .digest("hex");
   return `${action}:${digest}`;
 }
 
-async function reserveAttempt(clientKey: string, challengeVerified: boolean): Promise<AttemptReservation> {
+export async function reserveAttempt(clientKey: string, challengeVerified = false): Promise<AttemptReservation> {
   const { data, error } = await getSupabaseAdmin()
     .rpc("reserve_login_attempt", {
       p_client_key: clientKey,

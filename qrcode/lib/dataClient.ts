@@ -87,12 +87,6 @@ function toStudent(row: UserInfoRow): Student {
   };
 }
 
-async function hashStudentCode(studentCode: string): Promise<string> {
-  const bytes = new TextEncoder().encode(studentCode.trim());
-  const digest = await crypto.subtle.digest("SHA-256", bytes);
-  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
-}
-
 export async function getStudentByToken(qrToken: string): Promise<Student | null> {
   if (!/^[a-f0-9]{64}$/i.test(qrToken)) return null;
   const { data, error } = await supabase.rpc("get_student_by_token", { p_token: qrToken.toLowerCase() }).maybeSingle<{ hashed_user_id: string; student_id: string; title: string; name: string; faculty: string; created_at: string }>();
@@ -109,23 +103,31 @@ export async function getStudentByToken(qrToken: string): Promise<Student | null
   };
 }
 
-export async function createStudent(studentCode: string, title: string, name: string, faculty: string): Promise<Student> {
-  const hashedUserId = await hashStudentCode(studentCode);
-  const createdAt = new Date().toISOString();
-  const { error } = await supabase.rpc("register_attendee", {
-    p_hashed_user_id: hashedUserId,
-    p_student_id: studentCode,
-    p_title: title,
-    p_name: name.trim(),
-    p_faculty: faculty,
+export async function registerStudent(
+  studentCode: string,
+  title: string,
+  name: string,
+  faculty: string,
+  token: string,
+): Promise<void> {
+  const response = await fetch("/api/register/participant", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      studentCode,
+      title,
+      name: name.trim(),
+      faculty,
+      token,
+    }),
   });
-  if (error) {
-    if (/attendee already exists|duplicate|มีผู้ใช้นี้อยู่แล้ว/i.test(error.message)) {
-      throw new Error("มีผู้ใช้นี้อยู่แล้ว กรุณาเข้าสู่ระบบ");
-    }
-    fail("ลงทะเบียนผู้เข้าร่วมไม่สำเร็จ", error);
+  const body = await response.json().catch(() => null) as {
+    accepted?: boolean;
+    message?: string;
+  } | null;
+  if (!response.ok || !body?.accepted) {
+    throw new Error(body?.message ?? "ลงทะเบียนไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
   }
-  return { id: hashedUserId, studentCode, title, name: name.trim(), faculty, qrToken: hashedUserId, createdAt };
 }
 
 export async function loginStudent(studentCode: string, name: string, token = ""): Promise<ParticipantLoginAttempt> {

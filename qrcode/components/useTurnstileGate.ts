@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-export type TurnstileAction = "staff_login" | "participant_login" | "dashboard_login";
+export type TurnstileAction = "staff_login" | "participant_login" | "participant_register" | "dashboard_login";
 
 export function useTurnstileGate(storageKey: string, alwaysRequired = false) {
   const [challengeRequired, setChallengeRequiredState] = useState(alwaysRequired);

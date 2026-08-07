@@ -5,7 +5,7 @@ const TEST_SECRET_KEYS = new Set([
   "2x0000000000000000000000000000000AA",
   "3x0000000000000000000000000000000AA",
 ]);
-const ALLOWED_ACTIONS = new Set(["staff_login", "participant_login", "dashboard_login"]);
+const ALLOWED_ACTIONS = new Set(["staff_login", "participant_login", "participant_register", "dashboard_login"]);
 
 type SiteverifyResponse = {
   success: boolean;

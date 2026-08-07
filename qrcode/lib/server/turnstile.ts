@@ -8,7 +8,7 @@ const TEST_SECRET_KEYS = new Set([
   "3x0000000000000000000000000000000AA",
 ]);
 
-type TurnstileAction = "staff_login" | "participant_login" | "dashboard_login";
+type TurnstileAction = "staff_login" | "participant_login" | "participant_register" | "dashboard_login";
 
 type SiteverifyResponse = {
   success: boolean;

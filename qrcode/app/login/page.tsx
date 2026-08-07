@@ -8,6 +8,7 @@ import { TurnstileChallenge } from "@/components/TurnstileChallenge";
 import { useTurnstileGate } from "@/components/useTurnstileGate";
 import { getAllClubs, getStampsForStudent, loginStudent } from "@/lib/dataClient";
 import { locationNames } from "@/lib/mockData";
+import { PARTICIPANT_LOGIN_PREFILL_KEY } from "@/lib/participantRegistration";
 import { supabase } from "@/lib/supabase";
 import type { Club, Student, Zone } from "@/lib/types";
 
@@ -22,6 +23,7 @@ export default function ParticipantLoginPage() {
   const [clubsLoaded, setClubsLoaded] = useState(false);
   const [openZone, setOpenZone] = useState<Zone | null>(null);
   const [showRewardConditions, setShowRewardConditions] = useState(false);
+  const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [progressConnection, setProgressConnection] = useState<"connecting" | "live" | "fallback" | "offline">("connecting");
@@ -31,6 +33,20 @@ export default function ParticipantLoginPage() {
 
   useEffect(() => {
     getAllClubs().then(setClubs).catch(() => setClubs([])).finally(() => setClubsLoaded(true));
+    const savedPrefill = window.sessionStorage.getItem(PARTICIPANT_LOGIN_PREFILL_KEY);
+    if (savedPrefill) {
+      try {
+        const parsed = JSON.parse(savedPrefill) as { code?: string; name?: string };
+        if (typeof parsed.code === "string") setCode(parsed.code);
+        if (typeof parsed.name === "string") setName(parsed.name);
+      } catch {
+        // Ignore malformed local prefill data.
+      }
+      window.sessionStorage.removeItem(PARTICIPANT_LOGIN_PREFILL_KEY);
+    }
+    if (new URLSearchParams(window.location.search).get("registered") === "1") {
+      setNotice("รับข้อมูลแล้ว กรุณาเข้าสู่ระบบด้วยชื่อและรหัสนักศึกษา");
+    }
     const savedSession = window.sessionStorage.getItem(PARTICIPANT_SESSION_KEY);
     if (savedSession) {
       try {
@@ -209,6 +225,7 @@ export default function ParticipantLoginPage() {
       <p className="eyebrow">PARTICIPANT LOGIN</p>
       <h1 className="mt-2 text-3xl font-black">เข้าสู่ระบบผู้เข้าร่วม</h1>
       <p className="mt-2 text-sm leading-6 text-slate-600">ใช้ชื่อและรหัสนักศึกษาที่ลงทะเบียนไว้ เพื่อดู QR และความคืบหน้าของคุณ</p>
+      {notice && <p role="status" className="mt-5 rounded-2xl border border-green-200 bg-green-50 p-4 font-semibold text-green-800">{notice}</p>}
       <form className="mt-7 space-y-4" onSubmit={submit}>
         <div>
           <label className="block font-bold" htmlFor="name">ชื่อ–นามสกุล</label>
@@ -222,7 +239,7 @@ export default function ParticipantLoginPage() {
         {error && <p role="alert" className="rounded-2xl border border-red-200 bg-red-50 p-4 font-semibold text-red-800">{error}</p>}
         <button disabled={loading || !turnstile.ready || (turnstile.required && !turnstile.token)} className="primary w-full" type="submit">{loading ? "กำลังตรวจสอบ…" : "เข้าสู่ระบบ"}</button>
       </form>
-      <p className="mt-5 text-center text-sm text-slate-500">ลืมรหัส? กรุณาติดต่อที่บูธรับรางวัล</p>
+      <p className="mt-5 text-center text-sm text-slate-500">มีปัญหาการเข้าสู่ระบบ? กรุณาติดต่อที่บูธรับรางวัล</p>
       <p className="mt-3 text-center text-sm text-slate-600">ยังไม่มีบัญชี? <Link className="font-bold text-red-800 underline" href="/register">ลงทะเบียน</Link></p>
     </section>
   </div>;
