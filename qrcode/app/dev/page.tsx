@@ -138,7 +138,7 @@ export default function DevPage() {
       <div className="mt-2 flex flex-col justify-between gap-5 md:flex-row md:items-center">
         <div>
           <h2 className="text-2xl font-black">ตรวจรับรางวัล</h2>
-          <p className="mt-1 text-slate-400">ตรวจแสตมป์อย่างน้อยสถานที่ละ 5 ชมรม รวม 10 ชมรม</p>
+          <p className="mt-1 text-slate-400">ณ เต็นท์กองอำนวยการ ด้านหน้าเวทีลานสวนปาล์มหน้าตึก 40 (ตรวจแสตมป์อย่างน้อยสถานที่ละ 5 ชมรม รวม 10 ชมรม)</p>
         </div>
         <Link className="inline-flex min-h-12 items-center justify-center rounded-xl bg-white px-5 font-bold text-slate-950 no-underline hover:bg-red-100" href="/reward/reward">เปิดจุดสแกนรับรางวัล →</Link>
       </div>

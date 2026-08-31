@@ -71,7 +71,7 @@ export default function RewardScannerPage({ params }: { params: { token: string 
     <header className="mb-5 text-center sm:text-left">
       <p className="eyebrow">REWARD DESK</p>
       <h1 className="mt-1 text-3xl font-black tracking-tight sm:text-5xl">ตรวจสิทธิ์รับรางวัล</h1>
-      <p className="mt-2 text-slate-600">ต้องเข้าร่วม {locationNames.front} อย่างน้อย 5 ชมรม และ {locationNames.back} อย่างน้อย 5 ชมรม รวมอย่างน้อย 10 ชมรม</p>
+      <p className="mt-2 text-slate-600">จุดรับรางวัล ณ เต็นท์กองอำนวยการ ด้านหน้าเวทีลานสวนปาล์มหน้าตึก 40 (ต้องเข้าร่วม {locationNames.front} อย่างน้อย 5 ชมรม และ {locationNames.back} อย่างน้อย 5 ชมรม รวมอย่างน้อย 10 ชมรม)</p>
     </header>
     <section className="card">
       <div className={status ? "hidden" : ""}><Scanner ref={scannerRef} onScan={onScan} resetKey={0} /></div>
