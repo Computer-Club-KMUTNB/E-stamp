@@ -4,6 +4,23 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { ActivityLog, BoothRow, StampRow, UserInfoRow } from "./dashboard-types";
 
+async function fetchAllRows<T>(
+  fetchPage: (from: number, to: number) => PromiseLike<{ data: any[] | null; error: any }>
+): Promise<T[]> {
+  let all: T[] = [];
+  let page = 0;
+  const pageSize = 1000;
+  while (true) {
+    const { data, error } = await fetchPage(page * pageSize, (page + 1) * pageSize - 1);
+    if (error) throw error;
+    if (!data || data.length === 0) break;
+    all = all.concat(data as T[]);
+    if (data.length < pageSize) break;
+    page++;
+  }
+  return all;
+}
+
 export function useDashboardData(enabled: boolean) {
   const [stampRows, setStampRows] = useState<StampRow[]>([]);
   const [boothRows, setBoothRows] = useState<BoothRow[]>([]);
@@ -17,20 +34,26 @@ export function useDashboardData(enabled: boolean) {
     setError("");
     try {
       const [stamps, booths, activity, users] = await Promise.all([
-        supabase.from("user_stamps").select("front_booths_visited, back_booths_visited, is_collect_reward"),
+        fetchAllRows<StampRow>((from, to) =>
+          supabase.from("user_stamps").select("front_booths_visited, back_booths_visited, is_collect_reward").range(from, to)
+        ),
         supabase.from("booths").select("id, name, zone").order("name"),
-        supabase
-          .from("activity_log")
-          .select("id, action_type, created_at, booth_id, user_info(name, student_id), booths(name, zone)")
-          .order("created_at", { ascending: false }),
-        supabase.from("user_info").select("title, faculty"),
+        fetchAllRows<ActivityLog>((from, to) =>
+          supabase
+            .from("activity_log")
+            .select("id, action_type, created_at, booth_id, user_info(name, student_id), booths(name, zone)")
+            .order("created_at", { ascending: false })
+            .range(from, to)
+        ),
+        fetchAllRows<UserInfoRow>((from, to) =>
+          supabase.from("user_info").select("title, faculty").range(from, to)
+        ),
       ]);
-      const queryError = stamps.error ?? booths.error ?? activity.error ?? users.error;
-      if (queryError) throw queryError;
-      setStampRows((stamps.data ?? []) as StampRow[]);
+      if (booths.error) throw booths.error;
+      setStampRows(stamps);
       setBoothRows((booths.data ?? []) as BoothRow[]);
-      setLogs((activity.data ?? []) as unknown as ActivityLog[]);
-      setUserInfoRows((users.data ?? []) as UserInfoRow[]);
+      setLogs(activity);
+      setUserInfoRows(users);
     } catch (caught) {
       console.error("Error fetching dashboard data:", caught);
       setError("โหลดข้อมูล Dashboard ไม่สำเร็จ กรุณาลองใหม่");
